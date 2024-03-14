@@ -1,0 +1,38 @@
+<html>
+    <head>
+        <script
+            src="https://apis.google.com/js/platform.js"
+            async
+            defer
+        ></script>
+        <meta
+            name="google-signin-client_id"
+            content="555908440075-9h7iblic3pk981qiscpppdqp9p8oj7jj.apps.googleusercontent.com"
+        />
+        <script>
+            function onSignIn(googleUser) {
+                var profile = googleUser.getBasicProfile();
+                console.log("ID: " + profile.getId()); // Do not send to your backend! Use an ID token instead.
+                console.log("Name: " + profile.getName());
+                console.log("Image URL: " + profile.getImageUrl());
+                console.log("Email: " + profile.getEmail()); // This is null if the 'email' scope is not present.
+            }
+        </script>
+    </head>
+    <body>
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <form method="post" action="/q" style="xdisplay:none">
+            Create question<br/>
+            <input type="text" name="q" placeholder="Question?" />
+            <br/>
+
+            <input type="submit" />
+        </form>
+        <hr>
+    <?php
+    foreach ($questions as $q) {
+        printf('<a href="/q/%s">%s</a><br/>', $q['id'], htmlentities($q['text']));
+    }
+    ?>
+    </body>
+</html>

@@ -1,0 +1,17 @@
+<html>
+    <body>
+        <form method="post">
+
+        </form>
+    <?php
+    echo htmlentities($question['text']) . '<br/>';
+    ?>
+    <ul>
+    <?php
+    foreach ($answers as $answer) {
+        printf("<li><a href=\"/q/%s/%s\">%s</a>&nbsp;|&nbsp;%s&nbsp;[%s%%]</li>", htmlentities($answer['q']), htmlentities($answer['id']), htmlentities($answer['text']), $answer['cnt'], $answer['pct']);
+    }
+    ?>
+    </ul>
+    </body>
+</html>
