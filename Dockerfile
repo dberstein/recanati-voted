@@ -3,7 +3,7 @@
 # RUN docker-php-ext-install mysqli pdo pdo_mysql \
 #  && docker-php-ext-enable mysqli pdo pdo_mysql
 FROM php:8.2-apache
-RUN apt update && apt upgrade
+RUN apt update -y && apt upgrade -y
 RUN a2enmod rewrite && a2enmod actions
 
 # Install composer requirements
@@ -16,6 +16,7 @@ RUN curl -sS https://getcomposer.org/installer | \
 
 # Copy database skeleton
 COPY ./src/voted.db /data/
+RUN chmod o+w /data/voted.db
 
 # Run composer
 WORKDIR /var/www
