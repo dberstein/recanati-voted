@@ -36,15 +36,26 @@ $sql = 'SELECT * FROM question ORDER BY id';
     ]);
 })->setName('index');
 
-$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view){
-    die(var_dump($_REQUEST));
+$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
+    $stmt = $pdo->prepare(
+        "INSERT INTO question (id, text) VALUES (:id, :text);"
+    );
+    $stmt->execute([
+        ":id" => md5(time().":".$_REQUEST['q']),
+        ":text" => $_REQUEST['q'],
+    ]);
+
+    return $response
+        ->withHeader('Location', '/')
+        ->withStatus(302);
 });
 
 $app->get('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view){
     $q = $args['question'];
 
-    $sqlQuestion = "SELECT * FROM question WHERE id = :q";
-    $stmtQuestion = $pdo->prepare($sqlQuestion);
+    $stmtQuestion = $pdo->prepare(
+        "SELECT * FROM question WHERE id = :q"
+    );
     $stmtQuestion->execute([':q'=>$q]);
 
     $sqlAnswers = <<<EOS
