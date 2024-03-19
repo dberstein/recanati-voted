@@ -1,17 +1,49 @@
 <html>
+    <head>
+        <link rel="stylesheet" href="/static/css/main.css">
+    </head>
     <body>
-        <form method="post">
-
-        </form>
-    <?php
-    echo htmlentities($question['text']) . '<br/>';
-    ?>
-    <ul>
-    <?php
-    foreach ($answers as $answer) {
-        printf("<li><a href=\"/q/%s/%s\">%s</a>&nbsp;|&nbsp;%s&nbsp;[%s%%]</li>", htmlentities($answer['q']), htmlentities($answer['id']), htmlentities($answer['text']), $answer['cnt'], $answer['pct']);
-    }
-    ?>
-    </ul>
+        <div id="header">
+        <?php
+            echo '[<a href="/">home</a>]&nbsp;' . htmlentities($question['text']) . '<br/>';
+        ?>
+        </div>
+        <div id="body">
+            <form action="/vote" method="post">
+                <input type="hidden" name="question" value="<?=$question['id']?>"/>
+                <ul>
+            <?php
+            foreach ($answers as $a) {
+                echo '<li>';
+                if (array_key_exists('email', $_SESSION)) {
+                    printf(
+                        '<input type="radio" name="answer" value="%s" %s />',
+                        htmlentities($a['id']),
+                        $a['voted'] ? 'checked' : '',
+                    );
+                }
+                printf(
+                    '%s&nbsp;|&nbsp;%d&nbsp;[%f%%]',
+                    htmlentities($a['text']),
+                    $a['cnt'],
+                    $a['pct']
+                );
+                echo '</li>';
+            }
+            ?>
+                </ul>
+                <input type="submit" value="Vote for ..." />
+            </form>
+            <?php
+            if ($is_owner) {
+            ?>
+            <form method="post">
+                <input type="text" name="answer" placeholder="Additional answer ..." />
+                <input type="submit" value="Add answer"/>
+            </form>
+            <?php
+            }
+            ?>
+        </div>
     </body>
 </html>

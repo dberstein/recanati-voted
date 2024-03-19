@@ -1,0 +1,21 @@
+div#header {
+    background-color: orange;
+    padding: 10px;
+}
+
+div#body {
+    background-color: rgb(162, 251, 10);
+    padding: 10px;
+}
+
+li {
+    margin: 5px;
+    padding: 5px;
+    background-color: silver;
+    font-weight: bolder;
+}
+
+li > a {
+    text-decoration: none;
+}
+

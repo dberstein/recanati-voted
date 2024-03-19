@@ -16,7 +16,7 @@ RUN curl -sS https://getcomposer.org/installer | \
 
 # Copy database skeleton
 COPY ./src/voted.db /data/
-RUN chmod o+w /data/voted.db
+RUN chmod -R 777 /data
 
 # Run composer
 WORKDIR /var/www

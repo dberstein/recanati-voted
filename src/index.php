@@ -2,51 +2,108 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
+use Slim\Routing\RouteContext;
+
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$app = AppFactory::create();
+session_cache_limiter(false);
+session_start();
 
-$container = $app->getContainer();
+$app = AppFactory::create();
 
 // Register component on container
 $view = function ($container) {
     return new \Slim\Views\PhpRenderer(__DIR__ . '/templates/');
 };
-$container['view'] = $view;
 
+$app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $pdo = new PDO("sqlite:/data/voted.db");
 
+function isRequestJson(Request $request) {
+    return $request->getHeader('Content-Type') && "application/json" == $request->getHeader('Content-Type')[0];
+}
+
+function getRequestData(Request $request) {
+    return isRequestJson($request) ? $request->getParsedBody()  : $_REQUEST;
+}
+
+function generateId(...$data) {
+    $data[] = time();
+
+    return md5(implode(":", $data));
+}
+
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view) {
     $sql = <<<EOS
     SELECT q.* FROM question q INNER JOIN answer a ON a.q = q.id
   GROUP BY q.id HAVING COUNT(a.id) > 1
-  ORDER BY q.id LIMIT 10
+  ORDER BY q.created_at DESC
+     LIMIT 10
 EOS;
 $sql = 'SELECT * FROM question ORDER BY id';
     $stmt = $pdo->query($sql);
 
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'index.html', [
         'questions' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+        'url' => [
+            'login' => $routeParser->urlFor('login'),
+            'logout' => $routeParser->urlFor('logout'),
+        ],
     ]);
 })->setName('index');
 
-$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
-    $stmt = $pdo->prepare(
-        "INSERT INTO question (id, text) VALUES (:id, :text);"
-    );
-    $stmt->execute([
-        ":id" => md5(time().":".$_REQUEST['q']),
-        ":text" => $_REQUEST['q'],
+$app->get('/login', function (Request $request, Response $response, $args) use ($view) {
+    return $view([])->render($response, 'login.html', [
     ]);
+});
 
+$app->post('/login', function (Request $request, Response $response, $args) use ($view) {
+    $email = array_key_exists('email', $_POST) ? trim($_POST['email']) : '';
+    if (!preg_match('/.+@.+\..+$/', $email)) {
+        throw new Exception('Invalid email!');
+    }
+
+    $_SESSION['email'] = $email;
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
-        ->withHeader('Location', '/')
+        ->withHeader('Location', $routeParser->urlFor('index'))
+        ->withStatus(302);
+})->setName('login');
+
+$app->get('/logout', function (Request $request, Response $response, $args) use ($view) {
+    session_destroy();
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response
+        ->withHeader('Location', $routeParser->urlFor('index'))
+        ->withStatus(302);
+})->setName('logout');
+
+$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
+    $data = getRequestData($request);
+
+    $stmt = $pdo->prepare("INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);");
+    $data = [
+        ":id" => generateId($data['q']),
+        ":text" => $data['q'],
+    ];
+    if (array_key_exists('email', $_SESSION)) {
+        $data[":email"] = $_SESSION['email'];
+    }
+
+    $stmt->execute($data);
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response
+        ->withHeader('Location', $routeParser->urlFor('index'))
         ->withStatus(302);
 });
 
@@ -58,48 +115,116 @@ $app->get('/q/{question}', function (Request $request, Response $response, $args
     );
     $stmtQuestion->execute([':q'=>$q]);
 
+    $voted = false;
+    $stmtAnswer = $pdo->prepare(
+        'SELECT a FROM vote WHERE created_by = :email AND q = :question'
+    );
+    $data = [
+        ':question' => $q,
+        ':email' => array_key_exists('email', $_SESSION) ? $_SESSION['email'] : '',
+    ];
+    $stmtAnswer->execute($data);
+    $answer = $stmtAnswer->fetch(PDO::FETCH_ASSOC);
+    if ($answer) {
+        $voted = $answer['a'];
+    }
+
     $sqlAnswers = <<<EOS
-    SELECT a.*, (
-        SELECT COUNT(*) FROM vote v WHERE v.q = :q AND v.a = a.id
-      ) AS cnt
-      FROM answer a
-     WHERE a.q = :q
-    ORDER BY a.text
+SELECT a.*, (
+    SELECT COUNT(*) FROM vote v WHERE v.q = :q AND v.a = a.id
+    ) AS cnt
+    FROM answer a
+   WHERE a.q = :q
+ORDER BY a.text
 EOS;
     $stmtAnswers = $pdo->prepare($sqlAnswers);
     $stmtAnswers->execute([':q' => $q]);
-
     $answers = $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
     $total = 0;
     foreach ($answers as $a) {
         $total += $a['cnt'];
     }
-
     foreach ($answers as &$a) {
         $pct = 0;
         if ($total != 0) {
             $pct = 100 * ($a['cnt'] / $total);
         }
+
         $a['pct'] = $pct;
+        $a['voted'] = ($a['id'] == $voted);
     }
 
+    $question = $stmtQuestion->fetch(PDO::FETCH_ASSOC);
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'question.html', [
-        'question' => $stmtQuestion->fetch(PDO::FETCH_ASSOC),
+        'question' => $question,
         'answers' => $answers,
+        'is_owner' => array_key_exists('email', $_SESSION) ? $question['created_by'] == $_SESSION['email'] : false,
+        'voted' => $voted,
+        'url' => [
+            'login' => $routeParser->urlFor('login'),
+            'logout' => $routeParser->urlFor('logout'),
+        ],
     ]);
 })->setName('question');
 
-$app->get('/q/{question}/{answer}', function (Request $request, Response $response, $args) {
+$app->post('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view){
     $q = $args['question'];
-    $ans = $args['answer'];
-    return $response;
-})->setName('answer');
 
-$app->post('/q/{question}/{answer}', function (Request $request, Response $response, $args) {
-    $q = $args['question'];
-    $ans = $args['answer'];
-    return $response;
+    if (empty(trim($_POST['answer']))) {
+        throw new Exception('Missing answer!');
+    }
+
+    $stmt = $pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
+    $stmt->execute([
+        ':id' => generateId($q, $_POST['answer']),
+        ':q' => $q,
+        ':text' => $_POST['answer'],
+    ]);
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response
+        ->withHeader('Location', $routeParser->urlFor('question', [
+            'question' => $q,
+        ]))
+        ->withStatus(302);
+
+})->setName('create-answer');
+
+$app->post('/vote', function (Request $request, Response $response, $args) use ($pdo) {
+    if (!array_key_exists('email', $_SESSION)) {
+        throw new Exception('Please login first!');
+    }
+
+    $q = $_POST['question'];
+    $ans = $_POST['answer'];
+
+    $stmt = $pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
+    $stmt->execute([
+        ':q' => $q,
+        ':email' => $_SESSION['email'],
+    ]);
+    if ($stmt->fetch()) {
+        $sql = "UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;";
+    } else {
+        $sql = "INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);";
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':q' => $q,
+        ':a' => $ans,
+        ':email' => $_SESSION['email'],
+    ]);
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response
+        ->withHeader('Location', $routeParser->urlFor('question', [
+            'question' => $q,
+        ]))
+        ->withStatus(302);
 })->setName('vote');
+
 
 // Run app
 $app->run();
