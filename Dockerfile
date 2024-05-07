@@ -21,7 +21,7 @@ RUN chmod -R 777 /data
 # Run composer
 WORKDIR /var/www
 COPY composer-image.json ./composer.json
-RUN composer update --no-dev 
+RUN composer update --no-dev && composer dumpautoload
 
 # Copy source code
 WORKDIR /var/www/html

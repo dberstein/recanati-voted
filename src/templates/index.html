@@ -38,7 +38,8 @@
             } else {
         ?>
             <div class="login">
-                <div class="g-signin2" data-onsuccess="onSignIn"></div>
+                <!-- <div class="g-signin2" data-onsuccess="onSignIn"></div> -->
+                <a href="<?php echo filter_var($authUrl, FILTER_SANITIZE_URL); ?>" class="login-btn">Sign in with Google</a>
         <?php
                 printf('&nbsp;or <a href="%s">login here</a>', $url['login']);
             }
@@ -48,9 +49,14 @@
         <div id="body">
             <ul>
         <?php
-        foreach ($questions as $q) {
-            printf('<li><a href="/q/%s">%s</a></li>', $q['id'], htmlentities($q['text']));
-        }
+            foreach ($questions as $q) {
+                printf('<li><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></li>',
+                    htmlentities($q['id']),
+                    htmlentities($q['text']),
+                    htmlentities($q['created_by']),
+                    $q['votes']
+                );
+            }
         ?>
             </ul>
         </div>

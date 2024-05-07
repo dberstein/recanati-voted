@@ -1,11 +1,13 @@
 <?php
+require __DIR__ . '/../vendor/autoload.php';
+
+use Google\Client;
+use Google\Auth\OAuth2;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteContext;
-
-
-require __DIR__ . '/../vendor/autoload.php';
+use Slim\Views\PhpRenderer;
 
 session_cache_limiter(false);
 session_start();
@@ -14,7 +16,7 @@ $app = AppFactory::create();
 
 // Register component on container
 $view = function ($container) {
-    return new \Slim\Views\PhpRenderer(__DIR__ . '/templates/');
+    return new PhpRenderer(__DIR__ . '/templates/');
 };
 
 $app->addBodyParsingMiddleware();
@@ -24,6 +26,15 @@ $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $pdo = new PDO("sqlite:/data/voted.db");
 
+$client = new Google_Client();
+$client->setClientId(getenv('GOOGLE_CLIENT_ID'));
+$client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
+$client->setRedirectUri(getenv('GOOGLE_REDIRECT_URI'));
+$client->addScope("email");
+$client->addScope("profile");
+
+$authUrl = $client->createAuthUrl();
+
 function isRequestJson(Request $request) {
     return $request->getHeader('Content-Type') && "application/json" == $request->getHeader('Content-Type')[0];
 }
@@ -32,25 +43,39 @@ function getRequestData(Request $request) {
     return isRequestJson($request) ? $request->getParsedBody()  : $_REQUEST;
 }
 
-function generateId(...$data) {
-    $data[] = time();
+class Model {
+    /**
+     * PDO $pdo
+     */
+    protected $pdo = null;
 
-    return md5(implode(":", $data));
+    public function __construct(PDO $pdo) {
+        $this->pdo = $pdo;
+    }
+
+    static public function generateId(...$data) {
+        $data[] = time();
+        return md5(implode(":", $data));
+    }
 }
 
+$model = new Model($pdo);
+
 // Define app routes
-$app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view) {
+$app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view, $authUrl) {
     $sql = <<<EOS
-    SELECT q.* FROM question q INNER JOIN answer a ON a.q = q.id
-  GROUP BY q.id HAVING COUNT(a.id) > 1
-  ORDER BY q.created_at DESC
-     LIMIT 10
+  SELECT q.*, (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
+  FROM question q
+--  INNER JOIN answer a ON a.q = q.id
+-- GROUP BY q.id HAVING COUNT(a.id) > -1
+LIMIT 10
 EOS;
-$sql = 'SELECT * FROM question ORDER BY id';
+// $sql = 'SELECT * FROM question ORDER BY id';
     $stmt = $pdo->query($sql);
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'index.html', [
+        'authUrl' => $authUrl,
         'questions' => $stmt->fetchAll(PDO::FETCH_ASSOC),
         'url' => [
             'login' => $routeParser->urlFor('login'),
@@ -60,8 +85,7 @@ $sql = 'SELECT * FROM question ORDER BY id';
 })->setName('index');
 
 $app->get('/login', function (Request $request, Response $response, $args) use ($view) {
-    return $view([])->render($response, 'login.html', [
-    ]);
+    return $view([])->render($response, 'login.html', []);
 });
 
 $app->post('/login', function (Request $request, Response $response, $args) use ($view) {
@@ -78,6 +102,21 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
         ->withStatus(302);
 })->setName('login');
 
+$app->get('/login/google', function (Request $request, Response $response, $args) use ($view, $client) {
+    $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+    $client->setAccessToken($token['access_token']);
+
+    $google_oauth = new Google_Service_Oauth2($client);
+    $google_account_info = $google_oauth->userinfo->get();
+
+    $_SESSION['email'] = $google_account_info->email;
+
+    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+    return $response
+        ->withHeader('Location', $routeParser->urlFor('index'))
+        ->withStatus(302);
+})->setName('glogin');
+
 $app->get('/logout', function (Request $request, Response $response, $args) use ($view) {
     session_destroy();
 
@@ -90,9 +129,9 @@ $app->get('/logout', function (Request $request, Response $response, $args) use 
 $app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
     $data = getRequestData($request);
 
-    $stmt = $pdo->prepare("INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);");
+    $stmt = $pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
     $data = [
-        ":id" => generateId($data['q']),
+        ":id" => Model::generateId($data['q']),
         ":text" => $data['q'],
     ];
     if (array_key_exists('email', $_SESSION)) {
@@ -110,21 +149,16 @@ $app->post('/q', function (Request $request, Response $response, $args) use ($pd
 $app->get('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view){
     $q = $args['question'];
 
-    $stmtQuestion = $pdo->prepare(
-        "SELECT * FROM question WHERE id = :q"
-    );
+    $stmtQuestion = $pdo->prepare('SELECT * FROM question WHERE id = :q');
     $stmtQuestion->execute([':q'=>$q]);
 
-    $voted = false;
-    $stmtAnswer = $pdo->prepare(
-        'SELECT a FROM vote WHERE created_by = :email AND q = :question'
-    );
-    $data = [
+    $stmtAnswer = $pdo->prepare('SELECT a FROM vote WHERE created_by = :email AND q = :question');
+    $stmtAnswer->execute([
         ':question' => $q,
         ':email' => array_key_exists('email', $_SESSION) ? $_SESSION['email'] : '',
-    ];
-    $stmtAnswer->execute($data);
+    ]);
     $answer = $stmtAnswer->fetch(PDO::FETCH_ASSOC);
+    $voted = false;
     if ($answer) {
         $voted = $answer['a'];
     }
@@ -177,7 +211,7 @@ $app->post('/q/{question}', function (Request $request, Response $response, $arg
 
     $stmt = $pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
     $stmt->execute([
-        ':id' => generateId($q, $_POST['answer']),
+        ':id' => Model::generateId($q, $_POST['answer']),
         ':q' => $q,
         ':text' => $_POST['answer'],
     ]);
@@ -205,9 +239,9 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
         ':email' => $_SESSION['email'],
     ]);
     if ($stmt->fetch()) {
-        $sql = "UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;";
+        $sql = 'UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;';
     } else {
-        $sql = "INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);";
+        $sql = 'INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);';
     }
 
     $stmt = $pdo->prepare($sql);

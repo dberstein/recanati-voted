@@ -5,8 +5,9 @@
     <body>
         <div id="header">
         <?php
-            echo '[<a href="/">home</a>]&nbsp;' . htmlentities($question['text']) . '<br/>';
+            echo '[<a href="/">home</a>]&nbsp;<b>' . htmlentities($question['text']) . '</b><br/>';
         ?>
+        by <b><?=htmlentities($question['created_by'])?></b>
         </div>
         <div id="body">
             <form action="/vote" method="post">
