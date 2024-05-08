@@ -1,8 +1,6 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-use Google\Client;
-use Google\Auth\OAuth2;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -95,6 +93,7 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
     }
 
     $_SESSION['email'] = $email;
+    session_regenerate_id();
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
@@ -110,6 +109,7 @@ $app->get('/login/google', function (Request $request, Response $response, $args
     $google_account_info = $google_oauth->userinfo->get();
 
     $_SESSION['email'] = $google_account_info->email;
+    session_regenerate_id();
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
