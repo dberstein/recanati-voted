@@ -22,17 +22,6 @@ $app->addRoutingMiddleware();
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
-$pdo = new PDO("sqlite:/data/voted.db");
-
-$client = new Google_Client();
-$client->setClientId(getenv('GOOGLE_CLIENT_ID'));
-$client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
-$client->setRedirectUri(getenv('GOOGLE_REDIRECT_URI'));
-$client->addScope("email");
-$client->addScope("profile");
-
-$authUrl = $client->createAuthUrl();
-
 function isRequestJson(Request $request) {
     return $request->getHeader('Content-Type') && "application/json" == $request->getHeader('Content-Type')[0];
 }
@@ -55,17 +44,55 @@ class Model {
         $data[] = time();
         return md5(implode(":", $data));
     }
+
+    static public function login($email) {
+        $_SESSION['email'] = $email;
+        session_regenerate_id();
+    }
 }
 
+class GoogleClient {
+    protected $client;
+
+    public function __construct($clientID, $clientSecret, $redirectUrl) {
+        $this->client = new Google_Client();
+        $this->client->setClientId($clientID);
+        $this->client->setClientSecret($clientSecret);
+        $this->client->setRedirectUri($redirectUrl);
+        $this->client->addScope("email");
+        $this->client->addScope("profile");
+    }
+
+    public function getAuthUrl() {
+        return $this->client->createAuthUrl();
+    }
+
+    public function login() {
+        $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
+        $this->client->setAccessToken($token['access_token']);
+
+        $google_oauth = new Google_Service_Oauth2($this->client);
+        $google_account_info = $google_oauth->userinfo->get();
+
+        Model::login($google_account_info->email);
+    }
+}
+
+$pdo = new PDO("sqlite:/data/voted.db");
 $model = new Model($pdo);
+$googleClient = new GoogleClient(
+    getenv('GOOGLE_CLIENT_ID'),
+    getenv('GOOGLE_CLIENT_SECRET'),
+    getenv('GOOGLE_REDIRECT_URI')
+);
 
 // Define app routes
-$app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view, $authUrl) {
+$app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view, $googleClient) {
     $sql = <<<EOS
   SELECT q.*, (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
   FROM question q
 --  INNER JOIN answer a ON a.q = q.id
--- GROUP BY q.id HAVING COUNT(a.id) > -1
+-- GROUP BY q.id HAVING COUNT(a.id) > 1
 LIMIT 10
 EOS;
 // $sql = 'SELECT * FROM question ORDER BY id';
@@ -73,7 +100,7 @@ EOS;
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'index.html', [
-        'authUrl' => $authUrl,
+        'authUrl' => $googleClient->getAuthUrl(),
         'questions' => $stmt->fetchAll(PDO::FETCH_ASSOC),
         'url' => [
             'login' => $routeParser->urlFor('login'),
@@ -92,8 +119,7 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
         throw new Exception('Invalid email!');
     }
 
-    $_SESSION['email'] = $email;
-    session_regenerate_id();
+    Model::login($email);
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
@@ -101,15 +127,8 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
         ->withStatus(302);
 })->setName('login');
 
-$app->get('/login/google', function (Request $request, Response $response, $args) use ($view, $client) {
-    $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-    $client->setAccessToken($token['access_token']);
-
-    $google_oauth = new Google_Service_Oauth2($client);
-    $google_account_info = $google_oauth->userinfo->get();
-
-    $_SESSION['email'] = $google_account_info->email;
-    session_regenerate_id();
+$app->get('/login/google', function (Request $request, Response $response, $args) use ($view, $googleClient) {
+    $googleClient->login();
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
