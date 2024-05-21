@@ -7,6 +7,9 @@ use Slim\Factory\AppFactory;
 use Slim\Routing\RouteContext;
 use Slim\Views\PhpRenderer;
 
+use Daniel\Google\Client;
+use Daniel\Model;
+
 session_cache_limiter(false);
 session_start();
 
@@ -14,7 +17,7 @@ $app = AppFactory::create();
 
 // Register component on container
 $view = function ($container) {
-    return new PhpRenderer(__DIR__ . '/templates/');
+    return new PhpRenderer(__DIR__ . '/../templates/');
 };
 
 $app->addBodyParsingMiddleware();
@@ -30,57 +33,9 @@ function getRequestData(Request $request) {
     return isRequestJson($request) ? $request->getParsedBody()  : $_REQUEST;
 }
 
-class Model {
-    /**
-     * PDO $pdo
-     */
-    protected $pdo = null;
-
-    public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
-    }
-
-    static public function generateId(...$data) {
-        $data[] = time();
-        return md5(implode(":", $data));
-    }
-
-    static public function login($email) {
-        $_SESSION['email'] = $email;
-        session_regenerate_id();
-    }
-}
-
-class GoogleClient {
-    protected $client;
-
-    public function __construct($clientID, $clientSecret, $redirectUrl) {
-        $this->client = new Google_Client();
-        $this->client->setClientId($clientID);
-        $this->client->setClientSecret($clientSecret);
-        $this->client->setRedirectUri($redirectUrl);
-        $this->client->addScope("email");
-        $this->client->addScope("profile");
-    }
-
-    public function getAuthUrl() {
-        return $this->client->createAuthUrl();
-    }
-
-    public function login() {
-        $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
-        $this->client->setAccessToken($token['access_token']);
-
-        $google_oauth = new Google_Service_Oauth2($this->client);
-        $google_account_info = $google_oauth->userinfo->get();
-
-        Model::login($google_account_info->email);
-    }
-}
-
 $pdo = new PDO("sqlite:/data/voted.db");
 $model = new Model($pdo);
-$googleClient = new GoogleClient(
+$googleClient = new Client(
     getenv('GOOGLE_CLIENT_ID'),
     getenv('GOOGLE_CLIENT_SECRET'),
     getenv('GOOGLE_REDIRECT_URI')

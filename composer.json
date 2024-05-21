@@ -2,19 +2,17 @@
     "name": "daniel/app",
     "require": {
         "slim/slim": "^4.13",
-        "slim/slim-skeleton": "^4.5",
         "slim/psr7": "^1.6",
-        "slim/twig-view": "^3.3",
         "slim/php-view": "^3.2",
         "google/apiclient": "^2"
     },
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Daniel\\App\\": "src/"
+            "Daniel\\": "lib"
         },
         "classmap": [
-            "vendor/google/apiclient/src/"
+            "lib"
         ]
     },
     "authors": [
