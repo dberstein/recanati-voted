@@ -5,7 +5,7 @@ namespace Daniel\Google;
 use Google_Client;
 use Google_Service_Oauth2;
 
-use Daniel\App\Model;
+use Daniel\Model;
 
 class Client {
     protected $client;
