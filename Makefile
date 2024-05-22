@@ -3,7 +3,7 @@ build:
 	@docker build -t phpapp .
 
 run/dev: build
-	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src:/var/www/html phpapp
+	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: run
 run: build
@@ -11,7 +11,7 @@ run: build
 
 .PHONY: run/prod
 run/prod: build
-	@docker run -d -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src:/var/www/html phpapp
+	@docker run -d -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: sync
 sync:

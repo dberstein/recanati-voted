@@ -33,7 +33,13 @@
             }
             ?>
                 </ul>
+            <?php
+            if ($is_login) {
+            ?>
                 <input type="submit" value="Vote for ..." />
+            <?php
+            }
+            ?>
             </form>
             <?php
             if ($is_owner) {

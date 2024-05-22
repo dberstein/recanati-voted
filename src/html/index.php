@@ -25,14 +25,6 @@ $app->addRoutingMiddleware();
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
-function isRequestJson(Request $request) {
-    return $request->getHeader('Content-Type') && "application/json" == $request->getHeader('Content-Type')[0];
-}
-
-function getRequestData(Request $request) {
-    return isRequestJson($request) ? $request->getParsedBody()  : $_REQUEST;
-}
-
 $pdo = new PDO("sqlite:/data/voted.db");
 $model = new Model($pdo);
 $googleClient = new Client(
@@ -43,20 +35,10 @@ $googleClient = new Client(
 
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view, $googleClient) {
-    $sql = <<<EOS
-  SELECT q.*, (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
-  FROM question q
---  INNER JOIN answer a ON a.q = q.id
--- GROUP BY q.id HAVING COUNT(a.id) > 1
-LIMIT 10
-EOS;
-// $sql = 'SELECT * FROM question ORDER BY id';
-    $stmt = $pdo->query($sql);
-
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'index.html', [
         'authUrl' => $googleClient->getAuthUrl(),
-        'questions' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+        'questions' => Model::getQuestions($pdo),
         'url' => [
             'login' => $routeParser->urlFor('login'),
             'logout' => $routeParser->urlFor('logout'),
@@ -73,7 +55,6 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
     if (!preg_match('/.+@.+\..+$/', $email)) {
         throw new Exception('Invalid email!');
     }
-
     Model::login($email);
 
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
@@ -101,7 +82,7 @@ $app->get('/logout', function (Request $request, Response $response, $args) use 
 })->setName('logout');
 
 $app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
-    $data = getRequestData($request);
+    $data = Model::getRequestData($request);
 
     $stmt = $pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
     $data = [
@@ -162,12 +143,14 @@ EOS;
         $a['voted'] = ($a['id'] == $voted);
     }
 
+    $isLogin = array_key_exists('email', $_SESSION);
     $question = $stmtQuestion->fetch(PDO::FETCH_ASSOC);
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $view([])->render($response, 'question.html', [
         'question' => $question,
         'answers' => $answers,
-        'is_owner' => array_key_exists('email', $_SESSION) ? $question['created_by'] == $_SESSION['email'] : false,
+        'is_login' => $isLogin,
+        'is_owner' => $isLogin ? $question['created_by'] == $_SESSION['email'] : false,
         'voted' => $voted,
         'url' => [
             'login' => $routeParser->urlFor('login'),
