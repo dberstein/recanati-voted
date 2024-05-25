@@ -18,12 +18,13 @@ RUN curl -sS https://getcomposer.org/installer | \
 COPY ./src/voted.db /data/
 RUN chmod -R 777 /data
 
-# Copy source code
 WORKDIR /var/www/
-COPY ./src/ ./
-COPY ./composer.json ./
 
-# Run composer
+# Run composer (code must autoload using PSR-4)
+COPY ./composer.json ./
 RUN composer update --no-dev && composer dumpautoload
+
+# Copy source code
+COPY ./src/ ./
 
 # CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]

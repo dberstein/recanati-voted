@@ -10,9 +10,6 @@ use Slim\Views\PhpRenderer;
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model;
 
-session_cache_limiter(false);
-session_start();
-
 $app = AppFactory::create();
 
 // Register component on container
@@ -218,4 +215,6 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
 
 
 // Run app
+session_cache_limiter(false);
+session_start();
 $app->run();
