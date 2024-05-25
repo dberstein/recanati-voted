@@ -1,6 +1,6 @@
 <?php
 
-namespace Daniel\Google;
+namespace Daniel\Vote\Google;
 
 use Google_Client;
 use Google_Service_Oauth2;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Daniel;
+namespace Daniel\Vote;
 
 use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;

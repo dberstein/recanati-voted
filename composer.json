@@ -9,11 +9,8 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Daniel\\": "lib"
-        },
-        "classmap": [
-            "lib"
-        ]
+            "Daniel\\Vote\\": "lib"
+        }
     },
     "authors": [
         {

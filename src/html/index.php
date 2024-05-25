@@ -7,8 +7,8 @@ use Slim\Factory\AppFactory;
 use Slim\Routing\RouteContext;
 use Slim\Views\PhpRenderer;
 
-use Daniel\Google\Client;
-use Daniel\Model;
+use Daniel\Vote\Google\Client;
+use Daniel\Vote\Model;
 
 session_cache_limiter(false);
 session_start();
