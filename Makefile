@@ -7,11 +7,11 @@ run/dev: build
 
 .PHONY: run
 run: build
-	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp phpapp
+	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp --restart unless-stopped phpapp
 
 .PHONY: run/prod
 run/prod: build
-	@docker run -d -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
+	@docker run -d -p 8080:80 --env-file src/.env --name phpapp --restart unless-stopped -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: sync
 sync:
