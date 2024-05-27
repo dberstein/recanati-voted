@@ -6,7 +6,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteContext;
 use Slim\Views\PhpRenderer;
-
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model;
 
@@ -19,71 +18,67 @@ $view = function ($container) {
 
 $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
-
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$app->addErrorMiddleware(true, true, true);
 
 $pdo = new PDO("sqlite:/data/voted.db");
 $model = new Model($pdo);
-$googleClient = new Client(
+$client = new Client(
     getenv('GOOGLE_CLIENT_ID'),
     getenv('GOOGLE_CLIENT_SECRET'),
     getenv('GOOGLE_REDIRECT_URI')
 );
 
 // Define app routes
-$app->get('/', function (Request $request, Response $response, $args) use ($pdo, $view, $googleClient) {
+$app->get('/', function (Request $request, Response $response, $args) use ($model, $view, $client) {
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $view([])->render($response, 'index.html', [
-        'authUrl' => $googleClient->getAuthUrl(),
-        'questions' => Model::getQuestions($pdo),
+    $renderData = [
+        'authUrl' => $client->getAuthUrl(),
+        'questions' => $model->getQuestions(),
         'url' => [
             'login' => $routeParser->urlFor('login'),
             'logout' => $routeParser->urlFor('logout'),
         ],
-    ]);
+    ];
+    return $view([])->render($response, 'index.html', $renderData);
 })->setName('index');
 
 $app->get('/login', function (Request $request, Response $response, $args) use ($view) {
     return $view([])->render($response, 'login.html', []);
 });
 
-$app->post('/login', function (Request $request, Response $response, $args) use ($view) {
+$app->post('/login', function (Request $request, Response $response, $args) use ($model) {
     $email = array_key_exists('email', $_POST) ? trim($_POST['email']) : '';
-    if (!preg_match('/.+@.+\..+$/', $email)) {
+    if (!$model->isValidEmail($email)) {
         throw new Exception('Invalid email!');
     }
-    Model::login($email);
-
+    $model->login($email);
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
         ->withHeader('Location', $routeParser->urlFor('index'))
         ->withStatus(302);
 })->setName('login');
 
-$app->get('/login/google', function (Request $request, Response $response, $args) use ($view, $googleClient) {
-    $googleClient->login();
-
+$app->get('/login/google', function (Request $request, Response $response, $args) use ($client, $model) {
+    $client->login($model);
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
         ->withHeader('Location', $routeParser->urlFor('index'))
         ->withStatus(302);
 })->setName('glogin');
 
-$app->get('/logout', function (Request $request, Response $response, $args) use ($view) {
-    session_destroy();
-
+$app->get('/logout', function (Request $request, Response $response, $args) use ($model) {
+    $model->logout();
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     return $response
         ->withHeader('Location', $routeParser->urlFor('index'))
         ->withStatus(302);
 })->setName('logout');
 
-$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $view) {
+$app->post('/q', function (Request $request, Response $response, $args) use ($pdo, $model) {
     $data = Model::getRequestData($request);
-
     $stmt = $pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
     $data = [
-        ":id" => Model::generateId($data['q']),
+        ":id" => $model->generateId($data['q']),
         ":text" => $data['q'],
     ];
     if (array_key_exists('email', $_SESSION)) {
@@ -98,11 +93,11 @@ $app->post('/q', function (Request $request, Response $response, $args) use ($pd
         ->withStatus(302);
 });
 
-$app->get('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view){
+$app->get('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view, $model) {
     $q = $args['question'];
 
     $stmtQuestion = $pdo->prepare('SELECT * FROM question WHERE id = :q');
-    $stmtQuestion->execute([':q'=>$q]);
+    $stmtQuestion->execute([':q' => $q]);
 
     $stmtAnswer = $pdo->prepare('SELECT a FROM vote WHERE created_by = :email AND q = :question');
     $stmtAnswer->execute([
@@ -115,17 +110,9 @@ $app->get('/q/{question}', function (Request $request, Response $response, $args
         $voted = $answer['a'];
     }
 
-    $sqlAnswers = <<<EOS
-SELECT a.*, (
-    SELECT COUNT(*) FROM vote v WHERE v.q = :q AND v.a = a.id
-    ) AS cnt
-    FROM answer a
-   WHERE a.q = :q
-ORDER BY a.text
-EOS;
-    $stmtAnswers = $pdo->prepare($sqlAnswers);
-    $stmtAnswers->execute([':q' => $q]);
-    $answers = $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
+    $answers = $model->getAnswers($q);
+
+    // Calculate percentages
     $total = 0;
     foreach ($answers as $a) {
         $total += $a['cnt'];
@@ -140,10 +127,10 @@ EOS;
         $a['voted'] = ($a['id'] == $voted);
     }
 
-    $isLogin = array_key_exists('email', $_SESSION);
+    $isLogin = $model->isLogin();
     $question = $stmtQuestion->fetch(PDO::FETCH_ASSOC);
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $view([])->render($response, 'question.html', [
+    $renderData = [
         'question' => $question,
         'answers' => $answers,
         'is_login' => $isLogin,
@@ -153,10 +140,11 @@ EOS;
             'login' => $routeParser->urlFor('login'),
             'logout' => $routeParser->urlFor('logout'),
         ],
-    ]);
+    ];
+    return $view([])->render($response, 'question.html', $renderData);
 })->setName('question');
 
-$app->post('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $view){
+$app->post('/q/{question}', function (Request $request, Response $response, $args) use ($pdo, $model) {
     $q = $args['question'];
 
     if (empty(trim($_POST['answer']))) {
@@ -165,7 +153,7 @@ $app->post('/q/{question}', function (Request $request, Response $response, $arg
 
     $stmt = $pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
     $stmt->execute([
-        ':id' => Model::generateId($q, $_POST['answer']),
+        ':id' => $model->generateId($q, $_POST['answer']),
         ':q' => $q,
         ':text' => $_POST['answer'],
     ]);
@@ -179,8 +167,8 @@ $app->post('/q/{question}', function (Request $request, Response $response, $arg
 
 })->setName('create-answer');
 
-$app->post('/vote', function (Request $request, Response $response, $args) use ($pdo) {
-    if (!array_key_exists('email', $_SESSION)) {
+$app->post('/vote', function (Request $request, Response $response, $args) use ($pdo, $model) {
+    if (!$model->isLogin()) {
         throw new Exception('Please login first!');
     }
 
@@ -215,6 +203,7 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
 
 
 // Run app
+header('Connection: close');
 session_cache_limiter(false);
 session_start();
 $app->run();
