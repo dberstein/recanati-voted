@@ -5,6 +5,7 @@ namespace Daniel\Vote;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
+use Slim\Routing\RouteContext;
 
 class Model
 {
@@ -46,15 +47,82 @@ class Model
         return filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
-    static public function isRequestJson(Request $request)
+    public function isRequestJson(Request $request)
     {
         return $request->getHeader('Content-Type')
             && "application/json" == $request->getHeader('Content-Type')[0];
     }
 
-    static public function getRequestData(Request $request)
+    public function getRequestData(Request $request)
     {
-        return self::isRequestJson($request) ? $request->getParsedBody() : $_REQUEST;
+        return $this->isRequestJson($request) ? $request->getParsedBody() : $_REQUEST;
+    }
+
+    public function createQuestion(Request $request)
+    {
+        $data = $this->getRequestData($request);
+        $stmt = $this->pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
+        $q = $this->generateId($data['q']);
+        $data = [
+            ":id" => $q,
+            ":text" => $data['q'],
+        ];
+        if (array_key_exists('email', $_SESSION)) {
+            $data[":email"] = $_SESSION['email'];
+        }
+
+        $stmt->execute($data);
+        // $this->pdo->commit();
+        return $q;
+    }
+
+    public function viewQuestion(Request $request, $q)
+    {
+        $stmtQuestion = $this->pdo->prepare('SELECT * FROM question WHERE id = :q');
+        $stmtQuestion->execute([':q' => $q]);
+
+        $stmtAnswer = $this->pdo->prepare('SELECT a FROM vote WHERE created_by = :email AND q = :question');
+        $stmtAnswer->execute([
+            ':question' => $q,
+            ':email' => array_key_exists('email', $_SESSION) ? $_SESSION['email'] : '',
+        ]);
+        $answer = $stmtAnswer->fetch(PDO::FETCH_ASSOC);
+        $voted = false;
+        if ($answer) {
+            $voted = $answer['a'];
+        }
+
+        $answers = $this->getAnswers($q);
+
+        // Calculate percentages
+        $total = 0;
+        foreach ($answers as $a) {
+            $total += $a['cnt'];
+        }
+        foreach ($answers as &$a) {
+            $pct = 0;
+            if ($total != 0) {
+                $pct = 100 * ($a['cnt'] / $total);
+            }
+
+            $a['pct'] = $pct;
+            $a['voted'] = ($a['id'] == $voted);
+        }
+
+        $isLogin = $this->isLogin();
+        $question = $stmtQuestion->fetch(PDO::FETCH_ASSOC);
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        return [
+            'question' => $question,
+            'answers' => $answers,
+            'is_login' => $isLogin,
+            'is_owner' => $isLogin ? $question['created_by'] == $_SESSION['email'] : false,
+            'voted' => $voted,
+            'url' => [
+                'login' => $routeParser->urlFor('login'),
+                'logout' => $routeParser->urlFor('logout'),
+            ],
+        ];
     }
 
     public function getQuestions()
@@ -64,7 +132,7 @@ class Model
         FROM question q
       --  INNER JOIN answer a ON a.q = q.id
       -- GROUP BY q.id HAVING COUNT(a.id) > 1
-      LIMIT 10
+      -- LIMIT 10
       EOS;
         $stmt = $this->pdo->query($sql);
 
@@ -79,11 +147,21 @@ class Model
                ) AS cnt
           FROM answer a
          WHERE a.q = :q
-      ORDER BY a.text
+      -- ORDER BY a.text
       EOS;
 
         $stmtAnswers = $this->pdo->prepare($sqlAnswers);
         $stmtAnswers->execute([':q' => $q]);
         return $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function createAnswer(Request $request, $q, $a) {
+        $stmt = $this->pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
+        $stmt->execute([
+            ':id' => $this->generateId($q, $a),
+            ':q' => $q,
+            ':text' => $a,
+        ]);
+        // $this->pdo->commit();
     }
 }
