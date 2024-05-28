@@ -187,9 +187,16 @@ class Model
         ]);
         // $this->pdo->commit();
 
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        return $routeParser->urlFor('question', [
+        return $this->urlFor($request, 'question', [
             'question' => $q,
         ]);
+    }
+
+    public function urlFor(Request $request, $name, array $args = null)
+    {
+        if (is_null($args)) {
+            $args = [];
+        }
+        return RouteContext::fromRequest($request)->getRouteParser()->urlFor($name, $args);
     }
 }

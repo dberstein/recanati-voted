@@ -52,30 +52,23 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
         throw new Exception('Invalid email!');
     }
     $model->login($email);
-    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
-        ->urlFor('index'))
-        ->withStatus(302);
+    return $response->withHeader('Location', $model->urlFor($request, 'index'))->withStatus(302);
 })->setName('login');
 
 $app->get('/login/google', function (Request $request, Response $response, $args) use ($client, $model) {
     $client->login($model);
-    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
-        ->urlFor('index'))
-        ->withStatus(302);
+    return $response->withHeader('Location', $model->urlFor($request, 'index'))->withStatus(302);
 })->setName('glogin');
 
 $app->get('/logout', function (Request $request, Response $response, $args) use ($model) {
     $model->logout();
-    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
-        ->urlFor('index'))
-        ->withStatus(302);
+    return $response->withHeader('Location', $model->urlFor($request, 'index'))->withStatus(302);
 })->setName('logout');
 
 $app->post('/q', function (Request $request, Response $response, $args) use ($model) {
-    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
-        ->urlFor('question', [
-            'question' => $model->createQuestion($request),
-        ]))->withStatus(302);
+    return $response->withHeader('Location', $model->urlFor($request, 'question', [
+        'question' => $model->createQuestion($request),
+    ]))->withStatus(302);
 });
 
 $app->get('/q/{question}', function (Request $request, Response $response, $args) use ($view, $model) {
@@ -86,10 +79,9 @@ $app->post('/q/{question}', function (Request $request, Response $response, $arg
     if (!empty (trim($_POST['answer']))) {
         $model->createAnswer($request, $args['question'], $_POST['answer']);
     }
-    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
-        ->urlFor('question', [
-            'question' => $args['question'],
-        ]))->withStatus(302);
+    return $response->withHeader('Location', $model->urlFor($request, 'question', [
+        'question' => $args['question'],
+    ]))->withStatus(302);
 
 })->setName('create-answer');
 
@@ -100,7 +92,6 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
     $url = $model->vote($request, $_POST['question'], $_POST['answer']);
     return $response->withHeader('Location', $url)->withStatus(302);
 })->setName('vote');
-
 
 // Run app
 header('Connection: close');
