@@ -155,7 +155,8 @@ class Model
         return $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createAnswer(Request $request, $q, $a) {
+    public function createAnswer(Request $request, $q, $a)
+    {
         $stmt = $this->pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
         $stmt->execute([
             ':id' => $this->generateId($q, $a),
@@ -163,5 +164,32 @@ class Model
             ':text' => $a,
         ]);
         // $this->pdo->commit();
+    }
+
+    public function vote(Request $request, $q, $a)
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
+        $stmt->execute([
+            ':q' => $q,
+            ':email' => $_SESSION['email'],
+        ]);
+        if ($stmt->fetch()) {
+            $sql = 'UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;';
+        } else {
+            $sql = 'INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);';
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':q' => $q,
+            ':a' => $a,
+            ':email' => $_SESSION['email'],
+        ]);
+        // $this->pdo->commit();
+
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        return $routeParser->urlFor('question', [
+            'question' => $q,
+        ]);
     }
 }

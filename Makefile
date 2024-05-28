@@ -15,7 +15,7 @@ run/prod: build
 
 .PHONY: sync
 sync:
-	@rsync -avz -e 'ssh -i ~/.ssh/id_rsa_new' $(PWD)/ basegeo.com:/home/daniel/nginx-proxy/app/
+	@rsync -avz -e 'ssh -i ~/.ssh/id_rsa_new' --exclude voted.db $(PWD)/ basegeo.com:/home/daniel/nginx-proxy/app/
 
 .PHONY: unsync
 unsync:

@@ -52,31 +52,30 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
         throw new Exception('Invalid email!');
     }
     $model->login($email);
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('index'))
+    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
+        ->urlFor('index'))
         ->withStatus(302);
 })->setName('login');
 
 $app->get('/login/google', function (Request $request, Response $response, $args) use ($client, $model) {
     $client->login($model);
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('index'))
+    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
+        ->urlFor('index'))
         ->withStatus(302);
 })->setName('glogin');
 
 $app->get('/logout', function (Request $request, Response $response, $args) use ($model) {
     $model->logout();
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('index'))
+    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
+        ->urlFor('index'))
         ->withStatus(302);
 })->setName('logout');
 
 $app->post('/q', function (Request $request, Response $response, $args) use ($model) {
-    $q = $model->createQuestion($request);
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('question', [
-        'question' => $q,
-    ]))->withStatus(302);
+    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
+        ->urlFor('question', [
+            'question' => $model->createQuestion($request),
+        ]))->withStatus(302);
 });
 
 $app->get('/q/{question}', function (Request $request, Response $response, $args) use ($view, $model) {
@@ -87,43 +86,19 @@ $app->post('/q/{question}', function (Request $request, Response $response, $arg
     if (!empty (trim($_POST['answer']))) {
         $model->createAnswer($request, $args['question'], $_POST['answer']);
     }
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('question', [
-        'question' => $args['question'],
-    ]))->withStatus(302);
+    return $response->withHeader('Location', RouteContext::fromRequest($request)->getRouteParser()
+        ->urlFor('question', [
+            'question' => $args['question'],
+        ]))->withStatus(302);
 
 })->setName('create-answer');
 
-$app->post('/vote', function (Request $request, Response $response, $args) use ($pdo, $model) {
+$app->post('/vote', function (Request $request, Response $response, $args) use ($model) {
     if (!$model->isLogin()) {
         throw new Exception('Please login first!');
     }
-
-    $q = $_POST['question'];
-    $ans = $_POST['answer'];
-
-    $stmt = $pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
-    $stmt->execute([
-        ':q' => $q,
-        ':email' => $_SESSION['email'],
-    ]);
-    if ($stmt->fetch()) {
-        $sql = 'UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;';
-    } else {
-        $sql = 'INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);';
-    }
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':q' => $q,
-        ':a' => $ans,
-        ':email' => $_SESSION['email'],
-    ]);
-
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    return $response->withHeader('Location', $routeParser->urlFor('question', [
-        'question' => $q,
-    ]))->withStatus(302);
+    $url = $model->vote($request, $_POST['question'], $_POST['answer']);
+    return $response->withHeader('Location', $url)->withStatus(302);
 })->setName('vote');
 
 
