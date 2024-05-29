@@ -16,9 +16,15 @@ $view = function ($container) {
     return new PhpRenderer(__DIR__ . '/../templates/');
 };
 
+// Middlewares...
 $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
+// "Connection: close" header...
+$app->add(function ($request, $handler) {
+    $response = $handler->handle($request);
+    return $response->withHeader('Connection', 'close');
+});
 
 $pdo = new PDO("sqlite:/data/voted.db");
 $model = new Model($pdo);
@@ -94,7 +100,6 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
 })->setName('vote');
 
 // Run app
-header('Connection: close');
 session_cache_limiter(false);
 session_start();
 $app->run();
