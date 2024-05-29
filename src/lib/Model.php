@@ -4,8 +4,8 @@ namespace Daniel\Vote;
 
 use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Routing\RouteContext;
+use Daniel\Vote\Google\Client;
 
 class Model
 {
@@ -14,9 +14,15 @@ class Model
      */
     protected $pdo = null;
 
-    public function __construct(PDO $pdo)
+    /**
+     * Client $client
+     */
+    protected $client = null;
+
+    public function __construct(PDO $pdo, Client $client)
     {
         $this->pdo = $pdo;
+        $this->client = $client;
     }
 
     public function generateId(...$data)
@@ -198,5 +204,15 @@ class Model
             $args = [];
         }
         return RouteContext::fromRequest($request)->getRouteParser()->urlFor($name, $args);
+    }
+
+    public function getAuthUrl()
+    {
+        return $this->client->getAuthUrl();
+    }
+
+    public function clientLogin()
+    {
+        return $this->client->login($this);
     }
 }

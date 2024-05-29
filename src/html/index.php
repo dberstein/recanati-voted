@@ -26,26 +26,25 @@ $app->add(function ($request, $handler) {
     return $response->withHeader('Connection', 'close');
 });
 
-$pdo = new PDO("sqlite:/data/voted.db");
-$model = new Model($pdo);
-$client = new Client(
-    getenv('GOOGLE_CLIENT_ID'),
-    getenv('GOOGLE_CLIENT_SECRET'),
-    getenv('GOOGLE_REDIRECT_URI')
+$model = new Model(
+    new PDO("sqlite:/data/voted.db"),
+    new Client(
+        getenv('GOOGLE_CLIENT_ID'),
+        getenv('GOOGLE_CLIENT_SECRET'),
+        getenv('GOOGLE_REDIRECT_URI')
+    )
 );
 
 // Define app routes
-$app->get('/', function (Request $request, Response $response, $args) use ($model, $view, $client) {
-    $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-    $renderData = [
-        'authUrl' => $client->getAuthUrl(),
+$app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
+    return $view([])->render($response, 'index.html', [
+        'authUrl' => $model->getAuthUrl(),
         'questions' => $model->getQuestions(),
         'url' => [
-            'login' => $routeParser->urlFor('login'),
-            'logout' => $routeParser->urlFor('logout'),
+            'login' => $model->urlFor($request, 'login'),
+            'logout' => $model->urlFor($request, 'logout'),
         ],
-    ];
-    return $view([])->render($response, 'index.html', $renderData);
+    ]);
 })->setName('index');
 
 $app->get('/login', function (Request $request, Response $response, $args) use ($view) {
@@ -61,8 +60,8 @@ $app->post('/login', function (Request $request, Response $response, $args) use 
     return $response->withHeader('Location', $model->urlFor($request, 'index'))->withStatus(302);
 })->setName('login');
 
-$app->get('/login/google', function (Request $request, Response $response, $args) use ($client, $model) {
-    $client->login($model);
+$app->get('/login/google', function (Request $request, Response $response, $args) use ($model) {
+    $model->clientLogin();
     return $response->withHeader('Location', $model->urlFor($request, 'index'))->withStatus(302);
 })->setName('glogin');
 
