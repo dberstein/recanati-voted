@@ -38,9 +38,9 @@ $model = new Model(
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
     return $view([])->render($response, 'index.html', [
-        'authUrl' => $model->getAuthUrl(),
         'questions' => $model->getQuestions(),
         'url' => [
+            'auth' => $model->getAuthUrl(),
             'login' => $model->urlFor($request, 'login'),
             'logout' => $model->urlFor($request, 'logout'),
         ],

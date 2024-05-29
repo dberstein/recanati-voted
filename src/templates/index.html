@@ -18,7 +18,7 @@
             } else {
         ?>
             <div class="login">
-                <a href="<?php echo filter_var($authUrl, FILTER_SANITIZE_URL); ?>" class="login-btn">Sign in with Google</a>
+                <a href="<?php echo filter_var($url['auth'], FILTER_SANITIZE_URL); ?>" class="login-btn">Sign in with Google</a>
         <?php
                 printf('&nbsp;or <a href="%s">login here</a>', $url['login']);
             }
