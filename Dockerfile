@@ -3,12 +3,13 @@
 # RUN docker-php-ext-install mysqli pdo pdo_mysql \
 #  && docker-php-ext-enable mysqli pdo pdo_mysql
 FROM php:8.2-apache
-RUN apt update -y && apt upgrade -y
-RUN a2enmod rewrite && a2enmod actions
-
-# Install composer requirements
-RUN apt install -y libzip-dev/stable \
- && docker-php-ext-install zip
+RUN apt update -y && apt upgrade -y \
+ && a2enmod rewrite && a2enmod actions \
+# Install composer requirements \
+ && apt install -y libzip-dev/stable \
+ && docker-php-ext-install zip \
+ && mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+ && sed -i'' 's/expose_php = On/expose_php = Off/g' /usr/local/etc/php/php.ini
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | \
