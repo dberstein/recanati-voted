@@ -39,8 +39,15 @@ $app->add(function ($request, $handler) {
 
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
+    $page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
+    $pageSize = 10;
+    $questions = $model->getQuestions($pageSize, $page);
+    $hasNext = count($questions) > $pageSize;
     return $view([])->render($response, 'index.html', [
-        'questions' => $model->getQuestions(),
+        'questions' => $questions,
+        'format' => $model->urlFor($request, 'index') . '?page=%d',
+        'hasNext' => $hasNext,
+        'page' => $page,
         'url' => [
             'auth' => $model->getAuthUrl(),
             'login' => $model->urlFor($request, 'login'),

@@ -132,14 +132,16 @@ class Model
         ];
     }
 
-    public function getQuestions()
+    public function getQuestions($pageSize, $page)
     {
+        $offset = ($page - 1) * $pageSize;
+
         $sql = <<<EOS
         SELECT q.*, (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
         FROM question q
       --  INNER JOIN answer a ON a.q = q.id
       -- GROUP BY q.id HAVING COUNT(a.id) > 1
-      -- LIMIT 10
+        LIMIT $offset, $pageSize + 1
       EOS;
         $stmt = $this->pdo->query($sql);
 

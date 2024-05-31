@@ -39,5 +39,18 @@
         ?>
             </ul>
         </div>
+        <?php
+        if ($page > 1) {
+        ?>
+        <a href="<?php printf($format, $page - 1); ?>">Prev</a>
+        <?php
+        }
+        ?>
+        &nbsp;<b><?= $page ?></b>&nbsp;
+        <?php
+        if ($hasNext) {
+        ?>
+        <a href="<?php printf($format, $page + 1); ?>">Next</a>
+        <?php } ?>
     </body>
 </html>
