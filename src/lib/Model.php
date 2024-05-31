@@ -2,6 +2,7 @@
 
 namespace Daniel\Vote;
 
+use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteContext;
@@ -163,6 +164,13 @@ class Model
 
     public function createAnswer(Request $request, $q, $a)
     {
+        if (empty(trim($q))) {
+            throw new Exception('Missing question!');
+        }
+        if (empty(trim($q))) {
+            throw new Exception('Missing answer!');
+        }
+
         $stmt = $this->pdo->prepare('INSERT INTO answer (id, q, text) VALUES (:id, :q, :text);');
         $stmt->execute([
             ':id' => $this->generateId($q, $a),
@@ -174,6 +182,7 @@ class Model
 
     public function vote(Request $request, $q, $a)
     {
+        // UPDATE or INSERT user's vote?
         $stmt = $this->pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
         $stmt->execute([
             ':q' => $q,
@@ -185,6 +194,7 @@ class Model
             $sql = 'INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);';
         }
 
+        // Execute vote...
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':q' => $q,

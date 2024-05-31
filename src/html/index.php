@@ -1,17 +1,28 @@
 <?php
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
-use Slim\Routing\RouteContext;
 use Slim\Views\PhpRenderer;
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model;
 
+// Create model...
+$model = new Model(
+    new PDO("sqlite:/data/voted.db"),
+    new Client(
+        getenv('GOOGLE_CLIENT_ID'),
+        getenv('GOOGLE_CLIENT_SECRET'),
+        getenv('GOOGLE_REDIRECT_URI')
+    )
+);
+
+// Create app...
 $app = AppFactory::create();
 
-// Register component on container
+// View component on container
 $view = function ($container) {
     return new PhpRenderer(__DIR__ . '/../templates/');
 };
@@ -25,15 +36,6 @@ $app->add(function ($request, $handler) {
     $response = $handler->handle($request);
     return $response->withHeader('Connection', 'close');
 });
-
-$model = new Model(
-    new PDO("sqlite:/data/voted.db"),
-    new Client(
-        getenv('GOOGLE_CLIENT_ID'),
-        getenv('GOOGLE_CLIENT_SECRET'),
-        getenv('GOOGLE_REDIRECT_URI')
-    )
-);
 
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
