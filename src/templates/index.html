@@ -28,7 +28,12 @@
         <div id="body">
             <ul>
         <?php
+            $i = 0;
             foreach ($questions as $q) {
+                $i++;
+                if ($i > $pageSize) {
+                    continue;
+                }
                 printf('<li><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></li>',
                     htmlentities($q['id']),
                     htmlentities($q['text']),

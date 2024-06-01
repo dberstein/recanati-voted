@@ -46,6 +46,7 @@ $app->get('/', function (Request $request, Response $response, $args) use ($mode
     return $view([])->render($response, 'index.html', [
         'questions' => $questions,
         'format' => $model->urlFor($request, 'index') . '?page=%d',
+        'pageSize' => $pageSize,
         'hasNext' => $hasNext,
         'page' => $page,
         'url' => [
