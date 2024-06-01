@@ -137,12 +137,12 @@ class Model
         $offset = ($page - 1) * $pageSize;
 
         $sql = <<<EOS
-        SELECT q.*, (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
-        FROM question q
-      --  INNER JOIN answer a ON a.q = q.id
-      -- GROUP BY q.id HAVING COUNT(a.id) > 1
-        LIMIT $offset, $pageSize + 1
-      EOS;
+  SELECT q.*,
+         (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
+    FROM question q
+ORDER BY seq DESC
+   LIMIT $offset, $pageSize + 1
+EOS;
         $stmt = $this->pdo->query($sql);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
