@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Daniel\Vote\Google;
 
@@ -19,11 +19,11 @@ class Client {
         $this->client->addScope("profile");
     }
 
-    public function getAuthUrl() {
+    public function getAuthUrl(): string {
         return $this->client->createAuthUrl();
     }
 
-    public function login(Model $model) {
+    public function login(Model $model): void {
         $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
         $this->client->setAccessToken($token['access_token']);
 

@@ -12,6 +12,13 @@
         <form id="create-question" method="post" action="/q">
             Create question<br/>
             <input type="text" name="q" placeholder="Question?" required />
+            <br/>
+            Categories
+            <select name="category[]" multiple>
+                <option>Mobiles</option>
+                <option>Food</option>
+                <option>Cinema</option>
+            </select>
             <input type="submit" />
         </form>
         <?php
@@ -25,6 +32,15 @@
         ?>
             </div>
         </div>
+        <form id="filter" method="GET">
+            Filter categories:
+            <select name="category[]" multiple>
+                <option>Mobiles</option>
+                <option>Food</option>
+                <option>Cinema</option>
+            </select>
+            <input type="submit" value="Filter"/>
+        </form>
         <div id="body">
             <ul>
         <?php
@@ -32,7 +48,7 @@
             foreach ($questions as $q) {
                 $i++;
                 if ($i > $pageSize) {
-                    continue;
+                    break;
                 }
                 printf('<li><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></li>',
                     htmlentities($q['id']),
@@ -47,7 +63,7 @@
         <?php
         if ($page > 1) {
         ?>
-        <a href="<?php printf($format, $page - 1); ?>">Prev</a>
+        <a href="<?= $url['prev']; ?>">Prev</a>
         <?php
         }
         ?>
@@ -55,7 +71,7 @@
         <?php
         if ($hasNext) {
         ?>
-        <a href="<?php printf($format, $page + 1); ?>">Next</a>
+        <a href="<?= $url['next']; ?>">Next</a>
         <?php } ?>
     </body>
 </html>

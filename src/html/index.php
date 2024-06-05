@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -8,6 +8,7 @@ use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model;
+use Daniel\Vote\Model\Paginator;
 
 // Create model...
 $model = new Model(
@@ -23,7 +24,7 @@ $model = new Model(
 $app = AppFactory::create();
 
 // View component on container
-$view = function ($container) {
+$view = function (array $container) {
     return new PhpRenderer(__DIR__ . '/../templates/');
 };
 
@@ -39,13 +40,13 @@ $app->add(function ($request, $handler) {
 
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
-    $page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
+    $page = (int) (isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1);
     $pageSize = 10;
-    $questions = $model->getQuestions($pageSize, $page);
+    $questions = $model->getQuestions($pageSize, $page, isset($_GET['category']) ? $_GET['category'] : []);
     $hasNext = count($questions) > $pageSize;
+    $paginator = new Paginator($model->urlFor($request, 'index'), $_SERVER['QUERY_STRING']);
     return $view([])->render($response, 'index.html', [
         'questions' => $questions,
-        'format' => $model->urlFor($request, 'index') . '?page=%d',
         'pageSize' => $pageSize,
         'hasNext' => $hasNext,
         'page' => $page,
@@ -53,6 +54,8 @@ $app->get('/', function (Request $request, Response $response, $args) use ($mode
             'auth' => $model->getAuthUrl(),
             'login' => $model->urlFor($request, 'login'),
             'logout' => $model->urlFor($request, 'logout'),
+            'prev' => $paginator->url(-1),
+            'next' => $paginator->url(1),
         ],
     ]);
 })->setName('index');
@@ -84,7 +87,7 @@ $app->post('/q', function (Request $request, Response $response, $args) use ($mo
     return $response->withHeader('Location', $model->urlFor($request, 'question', [
         'question' => $model->createQuestion($request),
     ]))->withStatus(302);
-});
+})->setName('create-question');
 
 $app->get('/q/{question}', function (Request $request, Response $response, $args) use ($view, $model) {
     return $view([])->render($response, 'question.html', $model->viewQuestion($request, $args['question']));
@@ -109,6 +112,6 @@ $app->post('/vote', function (Request $request, Response $response, $args) use (
 })->setName('vote');
 
 // Run app
-session_cache_limiter(false);
+session_cache_limiter('');
 session_start();
 $app->run();

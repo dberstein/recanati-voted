@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Daniel\Vote;
 
@@ -65,25 +65,33 @@ class Model
         return $this->isRequestJson($request) ? $request->getParsedBody() : $_REQUEST;
     }
 
-    public function createQuestion(Request $request)
+    public function createQuestion(Request $request): string
     {
-        $data = $this->getRequestData($request);
+        $requestData = $this->getRequestData($request);
         $stmt = $this->pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
-        $q = $this->generateId($data['q']);
+        $q = $this->generateId($requestData['q']);
         $data = [
             ":id" => $q,
-            ":text" => $data['q'],
+            ":text" => $requestData['q'],
         ];
         if (array_key_exists('email', $_SESSION)) {
             $data[":email"] = $_SESSION['email'];
         }
-
         $stmt->execute($data);
+
+        foreach ($requestData['category'] as $category) {
+            $stmt = $this->pdo->prepare("INSERT INTO question_cat (q, cat) VALUES (:q, :cat);");
+            $stmt->execute([
+                ':q' => $q,
+                ':cat' => $category,
+            ]);
+        }
+
         // $this->pdo->commit();
         return $q;
     }
 
-    public function viewQuestion(Request $request, $q)
+    public function viewQuestion(Request $request, $q): array
     {
         $stmtQuestion = $this->pdo->prepare('SELECT * FROM question WHERE id = :q');
         $stmtQuestion->execute([':q' => $q]);
@@ -132,23 +140,38 @@ class Model
         ];
     }
 
-    public function getQuestions($pageSize, $page)
+    public function getQuestions($pageSize, $page, $categories = null): array|false
     {
         $offset = ($page - 1) * $pageSize;
+        if ($categories) {
+            $cats = implode(",", array_map(function ($x) {
+                return $this->pdo->quote($x);
+            }, (array) $categories));
 
-        $sql = <<<EOS
+            $sql = <<<EOS
+  SELECT q.*,
+         (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
+    FROM question q INNER JOIN question_cat qc ON qc.q = q.id AND qc.cat IN ($cats) 
+GROUP BY q.id
+ORDER BY seq DESC
+   LIMIT $offset, $pageSize + 1
+EOS;
+        } else {
+            $sql = <<<EOS
   SELECT q.*,
          (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
     FROM question q
 ORDER BY seq DESC
    LIMIT $offset, $pageSize + 1
 EOS;
+        }
+
         $stmt = $this->pdo->query($sql);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getAnswers($q)
+    public function getAnswers($q): array|false
     {
         $sqlAnswers = <<<EOS
         SELECT a.*, (
@@ -164,7 +187,7 @@ EOS;
         return $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createAnswer(Request $request, $q, $a)
+    public function createAnswer(Request $request, $q, $a): void
     {
         if (empty(trim($q))) {
             throw new Exception('Missing question!');
@@ -182,7 +205,7 @@ EOS;
         // $this->pdo->commit();
     }
 
-    public function vote(Request $request, $q, $a)
+    public function vote(Request $request, $q, $a): string
     {
         // UPDATE or INSERT user's vote?
         $stmt = $this->pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');

@@ -15,17 +15,17 @@ RUN apt update -y && apt upgrade -y \
 RUN curl -sS https://getcomposer.org/installer | \
     php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy database skeleton
-COPY ./src/voted.db /data/
-RUN chmod -R 777 /data
-
 WORKDIR /var/www/
 
 # Run composer (code must autoload using PSR-4)
-COPY ./composer.json ./
+COPY ./composer-image.json ./composer.json
 RUN composer update --no-dev && composer dumpautoload
 
 # Copy source code
 COPY ./src/ ./
+
+# Copy database skeleton
+COPY ./src/voted.db /data/
+RUN chmod -R 777 /data
 
 # CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]

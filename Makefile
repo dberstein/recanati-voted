@@ -20,3 +20,7 @@ sync:
 .PHONY: unsync
 unsync:
 	@rsync -avz -e 'ssh -i ~/.ssh/id_rsa_new' basegeo.com:/home/daniel/nginx-proxy/app/ $(PWD)/
+
+.PHONY: test
+test:
+	@vendor/bin/phpunit tests
