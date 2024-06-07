@@ -1,3 +1,8 @@
+<?php
+use Daniel\Vote\Model\Category;
+$filter = new Category(true, isset($_GET['category']) ? $_GET['category'] : null);
+$category = new Category(true);
+?>
 <html>
     <head>
         <link rel="stylesheet" href="/static/css/main.css">
@@ -14,11 +19,7 @@
             <input type="text" name="q" placeholder="Question?" required />
             <br/>
             Categories
-            <select name="category[]" multiple>
-                <option>Mobiles</option>
-                <option>Food</option>
-                <option>Cinema</option>
-            </select>
+            <?= $category->render('category'); ?>
             <input type="submit" />
         </form>
         <?php
@@ -34,11 +35,7 @@
         </div>
         <form id="filter" method="GET">
             Filter categories:
-            <select name="category[]" multiple>
-                <option>Mobiles</option>
-                <option>Food</option>
-                <option>Cinema</option>
-            </select>
+            <?= $filter->render('category'); ?>
             <input type="submit" value="Filter"/>
         </form>
         <div id="body">
