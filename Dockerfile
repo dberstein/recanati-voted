@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 RUN apt update -y && apt upgrade -y \
  && a2enmod rewrite && a2enmod actions \
 # Install composer requirements \
