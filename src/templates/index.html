@@ -1,6 +1,6 @@
 <?php
 use Daniel\Vote\Model\Category;
-$filter = new Category(true, isset($_GET['category']) ? $_GET['category'] : null);
+$filter = new Category(true, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : null);
 $category = new Category(true);
 ?>
 <html>
@@ -21,7 +21,7 @@ $category = new Category(true);
             <br/>
             <fieldset id="categories">
                 <legend>Categories</legend>
-                <?= $category->render('category'); ?>
+                <?= $category->render(Category::PARAM); ?>
             </fieldset>
             <input type="submit" value="Create question"/>
         </form>
@@ -39,7 +39,7 @@ $category = new Category(true);
         <form id="filter" method="GET">
             <fieldset id="filter">
                 <legend>Filter categories</legend>
-                <?= $filter->render('category'); ?>
+                <?= $filter->render(Category::PARAM); ?>
                 <br/>
                 <input type="submit" value="Filter"/>
             </fieldset>

@@ -4,6 +4,7 @@ namespace Daniel\Vote\Model;
 
 class Category
 {
+    const PARAM = 'category';
     public static array $categories = [
         'Cinema',
         'Dance',

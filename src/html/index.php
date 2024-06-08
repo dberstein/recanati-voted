@@ -9,6 +9,7 @@ use Slim\Views\PhpRenderer;
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model;
 use Daniel\Vote\Model\Paginator;
+use Daniel\Vote\Model\Category;
 
 // Create model...
 $model = new Model(
@@ -42,7 +43,7 @@ $app->add(function ($request, $handler) {
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
     $page = (int) (isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1);
     $pageSize = 10;
-    $questions = $model->getQuestions($pageSize, $page, isset($_GET['category']) ? $_GET['category'] : []);
+    $questions = $model->getQuestions($pageSize, $page, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : []);
     $hasNext = count($questions) > $pageSize;
     $paginator = new Paginator($model->urlFor($request, 'index'), $_SERVER['QUERY_STRING']);
     return $view([])->render($response, 'index.html', [

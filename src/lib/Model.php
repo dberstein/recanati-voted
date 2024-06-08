@@ -7,6 +7,7 @@ use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteContext;
 use Daniel\Vote\Google\Client;
+use Daniel\Vote\Model\Category;
 
 class Model
 {
@@ -79,7 +80,7 @@ class Model
         }
         $stmt->execute($data);
 
-        foreach ($requestData['category'] as $category) {
+        foreach ($requestData[Category::PARAM] as $category) {
             $stmt = $this->pdo->prepare("INSERT INTO question_cat (q, cat) VALUES (:q, :cat);");
             $stmt->execute([
                 ':q' => $q,
