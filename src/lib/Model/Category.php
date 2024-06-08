@@ -2,34 +2,53 @@
 
 namespace Daniel\Vote\Model;
 
-class Category {
+class Category
+{
     public static array $categories = [
-        'Mobiles',
-        'Food',
         'Cinema',
+        'Dance',
+        'Food',
+        'Mobiles',
+        'Music',
+        'People',
+        'Travel',
+        'Work',
     ];
 
     protected $multiple = false;
     protected array $selected = [];
-    public function __construct($multiple = null, $selected = null) {
+    public function __construct($multiple = null, $selected = null)
+    {
         $this->multiple = (bool) $multiple;
         $this->selected = $multiple ? (array) $selected : [$selected];
     }
-    public function render(string $name): string {
+    public function render(string $name): string
+    {
         if ($this->multiple) {
             $name .= '[]';
         }
-        $out = '<select name="'.$name.'" multiple>';
-
+        $out = '';
         foreach (self::$categories as $category) {
-            $selected = false;
+            $checked = false;
             foreach ($this->selected as $s) {
                 if ($s == $category) {
-                    $selected = true;
+                    $checked = true;
                     break;
                 }
             }
-            $out .= sprintf('<option%s>%s</option>', $selected ? ' selected' : '', htmlentities($category));
+            $hCategory = htmlentities($category);
+            $out .= sprintf(
+                '<input type="checkbox" id="%s" name="%s" value="%s"%s />',
+                $hCategory,
+                $name,
+                $hCategory,
+                $checked ? ' checked' : ''
+            );
+            $out .= sprintf(
+                '<label for="%s">%s</label>',
+                $hCategory,
+                $hCategory
+            );
         }
         $out .= '</select>';
         return $out;

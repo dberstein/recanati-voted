@@ -14,13 +14,16 @@ $category = new Category(true);
                 printf('<b>%s</b><br/>', htmlentities($_SESSION['email']));
                 printf('<a href="%s">Logout</a><br/><br/>', $url['logout']);
         ?>
+        <hr/>
         <form id="create-question" method="post" action="/q">
-            Create question<br/>
-            <input type="text" name="q" placeholder="Question?" required />
+            <label id="question">Question</label>
+            <input id="question" type="text" name="q" placeholder="Question?" required />
             <br/>
-            Categories
-            <?= $category->render('category'); ?>
-            <input type="submit" />
+            <fieldset id="categories">
+                <legend>Categories</legend>
+                <?= $category->render('category'); ?>
+            </fieldset>
+            <input type="submit" value="Create question"/>
         </form>
         <?php
             } else {
@@ -34,9 +37,12 @@ $category = new Category(true);
             </div>
         </div>
         <form id="filter" method="GET">
-            Filter categories:
-            <?= $filter->render('category'); ?>
-            <input type="submit" value="Filter"/>
+            <fieldset id="filter">
+                <legend>Filter categories</legend>
+                <?= $filter->render('category'); ?>
+                <br/>
+                <input type="submit" value="Filter"/>
+            </fieldset>
         </form>
         <div id="body">
             <ul>
