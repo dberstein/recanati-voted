@@ -51,7 +51,6 @@ class Category
                 $hCategory
             );
         }
-        $out .= '</select>';
         return $out;
     }
 }
