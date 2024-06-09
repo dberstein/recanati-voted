@@ -41,7 +41,7 @@ $app->add(function ($request, $handler) {
 
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
-    $page = (int) (isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1);
+    $page = (int) (isset($_GET[Paginator::PARAM]) && is_numeric($_GET[Paginator::PARAM]) ? $_GET[Paginator::PARAM] : 1);
     $pageSize = 10;
     $questions = $model->getQuestions($pageSize, $page, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : []);
     $hasNext = count($questions) > $pageSize;

@@ -3,6 +3,7 @@
 namespace Daniel\Vote\Model;
 
 class Paginator {
+    const PARAM = 'page';
     protected string $uri;
     protected int $page;
     protected array $qs = [];
@@ -13,11 +14,11 @@ class Paginator {
 
     public function url($offset): string {
         $qs = $this->qs;
-        if (!(isset($qs['page']) && is_numeric($qs['page']))) {
-            $qs['page'] = 1;
+        if (!(isset($qs[self::PARAM]) && is_numeric($qs[self::PARAM]))) {
+            $qs[self::PARAM] = 1;
         }
-        $qs['page'] += $offset;
-        $qs['page'] = max($qs['page'], 1);
+        $qs[self::PARAM] += $offset;
+        $qs[self::PARAM] = max($qs[self::PARAM], 1);
         return $this->uri . '?' . http_build_query($qs);
     }
 }
