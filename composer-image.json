@@ -1,6 +1,7 @@
 {
     "name": "daniel/app",
     "require": {
+        "php": "^8.3",
         "slim/slim": "^4.13",
         "slim/psr7": "^1.6",
         "slim/php-view": "^3.2",
