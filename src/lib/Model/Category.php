@@ -17,9 +17,11 @@ class Category
     ];
 
     protected $multiple = false;
+    protected $name;
     protected array $selected = [];
-    public function __construct($multiple = null, $selected = null)
+    public function __construct($name, $multiple = null, $selected = null)
     {
+        $this->name = (string) $name;
         $this->multiple = (bool) $multiple;
         $this->selected = $multiple ? (array) $selected : [$selected];
     }
@@ -38,16 +40,17 @@ class Category
                 }
             }
             $hCategory = htmlentities($category);
+            $id = md5("{$this->name}:{$hCategory}");
             $out .= sprintf(
                 '<input type="checkbox" id="%s" name="%s" value="%s"%s />',
-                $hCategory,
+                $id,
                 $name,
                 $hCategory,
                 $checked ? ' checked' : ''
             );
             $out .= sprintf(
                 '<label for="%s">%s</label>',
-                $hCategory,
+                $id,
                 $hCategory
             );
         }

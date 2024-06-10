@@ -1,7 +1,7 @@
 <?php
 use Daniel\Vote\Model\Category;
-$filter = new Category(true, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : null);
-$category = new Category(true);
+$filter = new Category('filter', true, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : null);
+$category = new Category('category', true);
 ?>
 <html>
     <head>
