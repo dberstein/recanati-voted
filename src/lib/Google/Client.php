@@ -8,9 +8,9 @@ use Google_Service_Oauth2;
 use Daniel\Vote\Model;
 
 class Client {
-    protected $client;
+    protected Google_Client $client;
 
-    public function __construct($clientID, $clientSecret, $redirectUrl) {
+    public function __construct(string $clientID, string $clientSecret, string $redirectUrl) {
         $this->client = new Google_Client();
         $this->client->setClientId($clientID);
         $this->client->setClientSecret($clientSecret);

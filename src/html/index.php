@@ -15,9 +15,9 @@ use Daniel\Vote\Model\Category;
 $model = new Model(
     new PDO("sqlite:/data/voted.db"),
     new Client(
-        getenv('GOOGLE_CLIENT_ID'),
-        getenv('GOOGLE_CLIENT_SECRET'),
-        getenv('GOOGLE_REDIRECT_URI')
+        (string) getenv('GOOGLE_CLIENT_ID'),
+        (string) getenv('GOOGLE_CLIENT_SECRET'),
+        (string) getenv('GOOGLE_REDIRECT_URI')
     )
 );
 
@@ -44,7 +44,7 @@ $app->get('/', function (Request $request, Response $response, $args) use ($mode
     $page = (int) (isset($_GET[Paginator::PARAM]) && is_numeric($_GET[Paginator::PARAM]) ? $_GET[Paginator::PARAM] : 1);
     $pageSize = 10;
     $questions = $model->getQuestions($pageSize, $page, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : []);
-    $hasNext = count($questions) > $pageSize;
+    $hasNext = count((array) $questions) > $pageSize;
     $paginator = new Paginator($model->urlFor($request, 'index'), $_SERVER['QUERY_STRING']);
     return $view([])->render($response, 'index.html', [
         'questions' => $questions,

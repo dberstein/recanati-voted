@@ -5,6 +5,9 @@ namespace Daniel\Vote\Model;
 class Category
 {
     const PARAM = 'category';
+    /**
+     * @var array<string> $categories
+     */
     public static array $categories = [
         'Cinema',
         'Dance',
@@ -16,14 +19,18 @@ class Category
         'Work',
     ];
 
-    protected $multiple = false;
-    protected $name;
+    protected bool $multiple = false;
+    protected string $name;
+    /* @phpstan-ignore missingType.iterableValue */
     protected array $selected = [];
-    public function __construct($name, $multiple = null, $selected = null)
+    /**
+     * @param array<string> $selected
+     */
+    public function __construct(string $name, bool $multiple = null, array $selected = null)
     {
         $this->name = (string) $name;
         $this->multiple = (bool) $multiple;
-        $this->selected = $multiple ? (array) $selected : [$selected];
+        $this->selected = (array) array_filter($multiple ? (array) $selected : [$selected], null);
     }
     public function render(string $name): string
     {

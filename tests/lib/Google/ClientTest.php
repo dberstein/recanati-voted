@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Daniel\Vote\Google\Client;
 
 final class ClientTest extends TestCase {
-    public function testGetAuthUrl() {
+    public function testGetAuthUrl(): void {
         $client = new Client('null', 'null', 'http://null');
         $this->assertEquals(
             $client->getAuthUrl(),

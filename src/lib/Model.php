@@ -14,12 +14,12 @@ class Model
     /**
      * PDO $pdo
      */
-    protected $pdo = null;
+    protected PDO $pdo;
 
     /**
      * Client $client
      */
-    protected $client = null;
+    protected Client $client;
 
     public function __construct(PDO $pdo, Client $client)
     {
@@ -27,48 +27,49 @@ class Model
         $this->client = $client;
     }
 
-    public function generateId(...$data)
+    public function generateId(string ...$data): string
     {
         $data[] = time();
         return md5(implode(":", $data));
     }
 
-    public function login($email)
+    public function login(string $email): void
     {
         $_SESSION['email'] = $email;
         session_regenerate_id();
     }
 
-    public function logout()
+    public function logout(): void
     {
         session_destroy();
     }
 
-    public function isLogin()
+    public function isLogin(): bool
     {
         return array_key_exists('email', $_SESSION)
             && !empty(trim($_SESSION['email']));
     }
 
-    public function isValidEmail($email)
+    public function isValidEmail(string $email): string|false
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
-    public function isRequestJson(Request $request)
+    public function isRequestJson(Request $request): bool
     {
         return $request->getHeader('Content-Type')
             && "application/json" == $request->getHeader('Content-Type')[0];
     }
 
-    public function getRequestData(Request $request)
+    /* @phpstan-ignore missingType.iterableValue */
+    public function getRequestData(Request $request): array|object|null
     {
         return $this->isRequestJson($request) ? $request->getParsedBody() : $_REQUEST;
     }
 
     public function createQuestion(Request $request): string
     {
-        $requestData = $this->getRequestData($request);
+        $requestData = (array) $this->getRequestData($request);
         $stmt = $this->pdo->prepare('INSERT INTO question (id, text, created_by) VALUES (:id, :text, :email);');
         $q = $this->generateId($requestData['q']);
         $data = [
@@ -92,7 +93,8 @@ class Model
         return $q;
     }
 
-    public function viewQuestion(Request $request, $q): array
+    /* @phpstan-ignore missingType.iterableValue */
+    public function viewQuestion(Request $request, string $q): array
     {
         $stmtQuestion = $this->pdo->prepare('SELECT * FROM question WHERE id = :q');
         $stmtQuestion->execute([':q' => $q]);
@@ -102,13 +104,13 @@ class Model
             ':question' => $q,
             ':email' => array_key_exists('email', $_SESSION) ? $_SESSION['email'] : '',
         ]);
-        $answer = $stmtAnswer->fetch(PDO::FETCH_ASSOC);
+        $answer = (array) $stmtAnswer->fetch(PDO::FETCH_ASSOC);
         $voted = false;
         if ($answer) {
             $voted = $answer['a'];
         }
 
-        $answers = $this->getAnswers($q);
+        $answers = (array) $this->getAnswers($q);
 
         // Calculate percentages
         $total = 0;
@@ -126,7 +128,7 @@ class Model
         }
 
         $isLogin = $this->isLogin();
-        $question = $stmtQuestion->fetch(PDO::FETCH_ASSOC);
+        $question = (array) $stmtQuestion->fetch(PDO::FETCH_ASSOC);
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         return [
             'question' => $question,
@@ -141,7 +143,11 @@ class Model
         ];
     }
 
-    public function getQuestions($pageSize, $page, $categories = null): array|false
+    /**
+     * @param array<string> $categories
+     * @phpstan-ignore missingType.iterableValue
+    */
+    public function getQuestions(int $pageSize, int $page, array $categories = null): array|false
     {
         $offset = ($page - 1) * $pageSize;
         if ($categories) {
@@ -168,11 +174,14 @@ EOS;
         }
 
         $stmt = $this->pdo->query($sql);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($stmt) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return false;
     }
 
-    public function getAnswers($q): array|false
+    /* @phpstan-ignore missingType.iterableValue */
+    public function getAnswers(string $q): array|false
     {
         $sqlAnswers = <<<EOS
         SELECT a.*, (
@@ -188,12 +197,12 @@ EOS;
         return $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createAnswer(Request $request, $q, $a): void
+    public function createAnswer(Request $request, string $q, string $a): void
     {
         if (empty(trim($q))) {
             throw new Exception('Missing question!');
         }
-        if (empty(trim($q))) {
+        if (empty(trim($a))) {
             throw new Exception('Missing answer!');
         }
 
@@ -206,7 +215,7 @@ EOS;
         // $this->pdo->commit();
     }
 
-    public function vote(Request $request, $q, $a): string
+    public function vote(Request $request, string $q, string $a): string
     {
         // UPDATE or INSERT user's vote?
         $stmt = $this->pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
@@ -234,7 +243,10 @@ EOS;
         ]);
     }
 
-    public function urlFor(Request $request, $name, array $args = null)
+    /**
+     * @param array<string> $args
+     */
+    public function urlFor(Request $request, string $name, array $args = null): string
     {
         if (is_null($args)) {
             $args = [];
@@ -242,13 +254,13 @@ EOS;
         return RouteContext::fromRequest($request)->getRouteParser()->urlFor($name, $args);
     }
 
-    public function getAuthUrl()
+    public function getAuthUrl(): string
     {
         return $this->client->getAuthUrl();
     }
 
-    public function clientLogin()
+    public function clientLogin(): void
     {
-        return $this->client->login($this);
+        $this->client->login($this);
     }
 }

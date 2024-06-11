@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Daniel\Vote\Model\Category;
 
 final class CategoryTest extends TestCase {
-    public function testRender() {
+    public function testRender(): void {
         $category = new Category('x');
         $this->assertEquals(
             $category->render('x'),
