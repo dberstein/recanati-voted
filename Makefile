@@ -2,7 +2,7 @@
 build:
 	@docker build -t phpapp .
 
-run/dev: build
+run/dev: test build
 	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: run
@@ -22,5 +22,9 @@ unsync:
 	@rsync -avz -e 'ssh -i ~/.ssh/id_rsa_new' basegeo.com:/home/daniel/nginx-proxy/app/ $(PWD)/
 
 .PHONY: test
-test:
+test: composer
 	@vendor/bin/phpunit tests
+
+.PHONY: composer
+composer:
+	@composer update && composer du
