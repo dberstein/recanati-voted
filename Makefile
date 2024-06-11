@@ -1,8 +1,10 @@
+PHPSTAN_LEVEL := 9
+
 .PHONY: build
 build:
 	@docker build -t phpapp .
 
-run/dev: test build
+run/dev: test phpstan build
 	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: run
@@ -10,7 +12,7 @@ run: build
 	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp --restart unless-stopped phpapp
 
 .PHONY: run/prod
-run/prod: build
+run/prod: phpstan build
 	@docker run -d -p 8080:80 --env-file src/.env --name phpapp --restart unless-stopped -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: sync
@@ -27,4 +29,8 @@ test: composer
 
 .PHONY: composer
 composer:
-	@composer update && composer du
+	@composer update && composer du --dev
+
+.PHONY: phpstan
+phpstan:
+	@vendor/bin/phpstan analyse -vvv -n --level $(PHPSTAN_LEVEL) src tests
