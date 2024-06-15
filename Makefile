@@ -29,7 +29,7 @@ test:
 
 .PHONY: composer
 composer:
-	@composer update && composer du --dev
+	@composer update --dev && composer du --dev
 
 .PHONY: phpstan
 phpstan:
