@@ -54,10 +54,10 @@ $category = new Category('category', true);
                     break;
                 }
                 printf('<li><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></li>',
-                    htmlentities($q['id']),
-                    htmlentities($q['text']),
-                    htmlentities($q['created_by']),
-                    $q['votes']
+                    htmlentities($q->get('id')),
+                    htmlentities($q->get('text')),
+                    htmlentities($q->get('created_by')),
+                    $q->get('votes')
                 );
             }
         ?>

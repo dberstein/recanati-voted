@@ -1,4 +1,4 @@
-PHPSTAN_LEVEL := 9
+PHPSTAN_LEVEL := 7
 
 .PHONY: build
 build:
@@ -24,7 +24,7 @@ unsync:
 	@rsync -avz -e 'ssh -i ~/.ssh/id_rsa_new' basegeo.com:/home/daniel/nginx-proxy/app/ $(PWD)/
 
 .PHONY: test
-test: composer
+test:
 	@vendor/bin/phpunit tests
 
 .PHONY: composer

@@ -2,6 +2,7 @@
 
 namespace Daniel\Vote;
 
+use Daniel\Vote\Dto\Record;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -145,39 +146,34 @@ class Model
 
     /**
      * @param array<string> $categories
-     * @phpstan-ignore missingType.iterableValue
+     * @return array<Record>
     */
-    public function getQuestions(int $pageSize, int $page, array $categories = null): array|false
+    public function getQuestions(int $pageSize, int $page, array $categories = null): array
     {
         $offset = ($page - 1) * $pageSize;
+        $join = null;
         if ($categories) {
             $cats = implode(",", array_map(function ($x) {
                 return $this->pdo->quote($x);
             }, (array) $categories));
-
-            $sql = <<<EOS
-  SELECT q.*,
-         (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
-    FROM question q INNER JOIN question_cat qc ON qc.q = q.id AND qc.cat IN ($cats) 
-GROUP BY q.id
-ORDER BY seq DESC
-   LIMIT $offset, $pageSize + 1
-EOS;
-        } else {
-            $sql = <<<EOS
-  SELECT q.*,
-         (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
-    FROM question q
-ORDER BY seq DESC
-   LIMIT $offset, $pageSize + 1
-EOS;
+            $join = " INNER JOIN question_cat qc ON qc.q = q.id AND qc.cat IN ($cats)";
         }
-
+        $sql = <<<EOS
+  SELECT q.*,
+         (SELECT COUNT(*) FROM vote v WHERE v.q = q.id) AS votes
+    FROM question q $join
+ORDER BY seq DESC
+   LIMIT $offset, $pageSize + 1
+EOS;
+        $qs = [];
         $stmt = $this->pdo->query($sql);
-        if ($stmt) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$stmt) {
+            return $qs;
         }
-        return false;
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $record) {
+            $qs[] = new Record($record);
+        }
+        return $qs;
     }
 
     /* @phpstan-ignore missingType.iterableValue */
