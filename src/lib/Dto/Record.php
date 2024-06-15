@@ -8,6 +8,7 @@ class Record
 {
     /** @var array<mixed> */
     protected array $fields;
+
     /**
      * @param array<mixed> $fields
      */
