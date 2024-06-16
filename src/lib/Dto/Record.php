@@ -14,7 +14,7 @@ class Record
      */
     public function __construct(array $fields)
     {
-        $this->fields = (array) $fields;
+        $this->fields = $fields;
     }
 
     /**
