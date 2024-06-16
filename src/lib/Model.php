@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteContext;
 use Daniel\Vote\Google\Client;
 use Daniel\Vote\Model\Category;
+use Daniel\Vote\Model\Vote;
 
 class Model
 {
@@ -215,30 +216,13 @@ EOS;
 
     public function vote(Request $request, string $q, string $a): string
     {
-        // UPDATE or INSERT user's vote?
-        $stmt = $this->pdo->prepare('SELECT * FROM vote WHERE q=:q AND created_by=:email');
-        $stmt->execute([
-            ':q' => $q,
-            ':email' => $_SESSION['email'],
-        ]);
-        if ($stmt->fetch()) {
-            $sql = 'UPDATE vote SET a=:a WHERE q=:q AND created_by=:email;';
-        } else {
-            $sql = 'INSERT INTO vote (q, a, created_by) VALUES (:q, :a, :email);';
-        }
-
-        // Execute vote...
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':q' => $q,
-            ':a' => $a,
-            ':email' => $_SESSION['email'],
-        ]);
-        // $this->pdo->commit();
-
-        return $this->urlFor($request, 'question', [
-            'question' => $q,
-        ]);
+        $vote = new Vote($this->pdo, $q, $a);
+        return match ($vote()) {
+            true => $this->urlFor($request, 'question', [
+                'question' => $q,
+            ]),
+            false => '',
+        };
     }
 
     /**
