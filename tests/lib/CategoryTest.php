@@ -1,12 +1,16 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 require __DIR__ . '/../../vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use Daniel\Vote\Model\Category;
 
-final class CategoryTest extends TestCase {
-    public function testRender(): void {
+final class CategoryTest extends TestCase
+{
+    public function testRender(): void
+    {
         $category = new Category('x');
         $this->assertEquals(
             $category->render('x'),

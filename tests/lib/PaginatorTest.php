@@ -1,12 +1,16 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 require __DIR__ . '/../../vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use Daniel\Vote\Model\Paginator;
 
-final class PaginatorTest extends TestCase {
-    public function testNext(): void {
+final class PaginatorTest extends TestCase
+{
+    public function testNext(): void
+    {
         $paginator = new Paginator('/', 'dummy=data&page=2');
         $this->assertEquals($paginator->url(-1), '/?dummy=data&page=1');
         $this->assertEquals($paginator->url(1), '/?dummy=data&page=3');

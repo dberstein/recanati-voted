@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -95,7 +97,7 @@ $app->get('/q/{question}', function (Request $request, Response $response, $args
 })->setName('question');
 
 $app->post('/q/{question}', function (Request $request, Response $response, $args) use ($model) {
-    if (!empty (trim($_POST['answer']))) {
+    if (!empty(trim($_POST['answer']))) {
         $model->createAnswer($request, $args['question'], $_POST['answer']);
     }
     return $response->withHeader('Location', $model->urlFor($request, 'question', [

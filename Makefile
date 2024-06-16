@@ -34,3 +34,11 @@ composer:
 .PHONY: phpstan
 phpstan:
 	@vendor/bin/phpstan analyse -vvv -n --level $(PHPSTAN_LEVEL) src tests
+
+.PHONY: format/check
+format/check:
+	@vendor/bin/php-cs-fixer check src
+
+.PHONY: format/fix
+format/fix:
+	@vendor/bin/php-cs-fixer fix src

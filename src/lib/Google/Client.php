@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Daniel\Vote\Google;
 
@@ -7,10 +9,12 @@ use Google_Service_Oauth2;
 
 use Daniel\Vote\Model;
 
-class Client {
+class Client
+{
     protected Google_Client $client;
 
-    public function __construct(string $clientID, string $clientSecret, string $redirectUrl) {
+    public function __construct(string $clientID, string $clientSecret, string $redirectUrl)
+    {
         $this->client = new Google_Client();
         $this->client->setClientId($clientID);
         $this->client->setClientSecret($clientSecret);
@@ -19,11 +23,13 @@ class Client {
         $this->client->addScope("profile");
     }
 
-    public function getAuthUrl(): string {
+    public function getAuthUrl(): string
+    {
         return $this->client->createAuthUrl();
     }
 
-    public function login(Model $model): void {
+    public function login(Model $model): void
+    {
         $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
         $this->client->setAccessToken($token['access_token']);
 

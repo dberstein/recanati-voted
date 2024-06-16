@@ -1,21 +1,26 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Daniel\Vote\Model;
 
-class Paginator {
-    const PARAM = 'page';
+class Paginator
+{
+    public const PARAM = 'page';
     protected string $uri;
     protected int $page;
     /**
      * @var array<string> $qs
      */
     protected array $qs = [];
-    public function __construct(string $uri, string $qs = null) {
+    public function __construct(string $uri, string $qs = null)
+    {
         $this->uri = $uri;
         parse_str((string) $qs, $this->qs);
     }
 
-    public function url(int $offset): string {
+    public function url(int $offset): string
+    {
         $qs = $this->qs;
         if (!(isset($qs[self::PARAM]) && is_numeric($qs[self::PARAM]))) {
             $qs[self::PARAM] = 1;

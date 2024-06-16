@@ -1,10 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Daniel\Vote\Model;
 
 class Category
 {
-    const PARAM = 'category';
+    public const PARAM = 'category';
     /**
      * @var array<string> $categories
      */
