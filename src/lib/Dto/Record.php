@@ -6,7 +6,9 @@ namespace Daniel\Vote\Dto;
 
 class Record
 {
-    /** @var array<mixed> */
+    /**
+     * @var array<mixed>
+     */
     protected array $fields;
 
     /**
@@ -25,6 +27,13 @@ class Record
         $this->fields = $fields;
     }
 
+    /**
+     * Sets new value to $field and returns old value.
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return mixed
+     */
     public function set(string $field, mixed $value): mixed
     {
         if (!array_key_exists($field, $this->fields)) {
@@ -35,6 +44,12 @@ class Record
         return $old;
     }
 
+    /**
+     * Returns $field value.
+     *
+     * @param string $field
+     * @return mixed
+     */
     public function get(string $field): mixed
     {
         if (!array_key_exists($field, $this->fields)) {

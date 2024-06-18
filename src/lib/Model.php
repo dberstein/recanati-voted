@@ -35,12 +35,19 @@ class Model
         $this->client = $client;
     }
 
+    /**
+     * @param string ...$data
+     * @return string
+     */
     public function generateId(string ...$data): string
     {
         $data[] = time();
         return md5(implode(":", $data));
     }
 
+    /**
+     * @param string $email
+     */
     public function login(string $email): void
     {
         $_SESSION['email'] = $email;
@@ -52,17 +59,28 @@ class Model
         session_destroy();
     }
 
+    /**
+     * @return bool
+     */
     public function isLogin(): bool
     {
         return array_key_exists('email', $_SESSION)
             && !empty(trim($_SESSION['email']));
     }
 
+    /**
+     * @param string $email
+     * @return string|false
+     */
     public function isValidEmail(string $email): string|false
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
+    /**
+     * @param Request $request
+     * @return bool
+     */
     public function isRequestJson(Request $request): bool
     {
         return $request->getHeader('Content-Type')
@@ -101,7 +119,11 @@ class Model
         return $q;
     }
 
-    /* @phpstan-ignore missingType.iterableValue */
+    /**
+     * @param Request $request
+     * @param string $q
+     * @phpstan-ignore missingType.iterableValue
+    */
     public function viewQuestion(Request $request, string $q): array
     {
         $stmtQuestion = $this->pdo->prepare('SELECT * FROM question WHERE id = :q');
@@ -152,6 +174,8 @@ class Model
     }
 
     /**
+     * @param int $pageSize
+     * @param int $page
      * @param array<string> $categories
      * @return array<Record>
     */
@@ -200,6 +224,11 @@ EOS;
         return $stmtAnswers->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param Request $request
+     * @param string $q
+     * @param string $a
+     */
     public function createAnswer(Request $request, string $q, string $a): void
     {
         if (empty(trim($q))) {
@@ -218,6 +247,12 @@ EOS;
         // $this->pdo->commit();
     }
 
+    /**
+     * @param Request $request
+     * @param string $q
+     * @param string $a
+     * @return string
+     */
     public function vote(Request $request, string $q, string $a): string
     {
         $vote = new Vote($this->pdo, $q, $a);
@@ -230,6 +265,8 @@ EOS;
     }
 
     /**
+     * @param Request $request
+     * @param string $name
      * @param array<string> $args
      */
     public function urlFor(Request $request, string $name, array $args = null): string
@@ -240,6 +277,9 @@ EOS;
         return RouteContext::fromRequest($request)->getRouteParser()->urlFor($name, $args);
     }
 
+    /**
+     * @return string
+     */
     public function getAuthUrl(): string
     {
         return $this->client->getAuthUrl();

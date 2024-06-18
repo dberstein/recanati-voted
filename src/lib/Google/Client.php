@@ -13,6 +13,11 @@ class Client
 {
     protected Google_Client $client;
 
+    /**
+     * @param string $clientID
+     * @param string $clientSecret
+     * @param string $redirectUrl
+     */
     public function __construct(string $clientID, string $clientSecret, string $redirectUrl)
     {
         $this->client = new Google_Client();
@@ -23,11 +28,19 @@ class Client
         $this->client->addScope("profile");
     }
 
+    /**
+     * @return string
+     */
     public function getAuthUrl(): string
     {
         return $this->client->createAuthUrl();
     }
 
+    /**
+     * Validates Google SSO and login SSO's email.
+     *
+     * @param Model $model
+     */
     public function login(Model $model): void
     {
         $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
