@@ -1,10 +1,16 @@
 div#header {
-    background-color: orange;
-    padding: 10px;
+    /* background-color: orange; */
+    background-color: silver;
+    /* padding: 10px; */
+}
+
+form#create-question {
+    padding-left: 5%;
+    padding-bottom: 1%;
 }
 
 div#body {
-    background-color: rgb(162, 251, 10);
+    /* background-color: rgb(162, 251, 10); */
     padding: 10px;
 }
 
@@ -19,3 +25,7 @@ li > a {
     text-decoration: none;
 }
 
+a.login-btn {
+    color: black;
+    text-decoration: none;
+}

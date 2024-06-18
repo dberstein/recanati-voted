@@ -68,14 +68,14 @@ class Category
             $hCategory = htmlentities($category);
             $id = md5("{$this->name}:{$hCategory}");
             $out .= sprintf(
-                '<input type="checkbox" id="%s" name="%s" value="%s"%s />',
+                '&nbsp;&nbsp;<input type="checkbox" id="%s" name="%s" value="%s"%s />',
                 $id,
                 $name,
                 $hCategory,
                 $checked ? ' checked' : ''
             );
             $out .= sprintf(
-                '<label for="%s">%s</label>',
+                '&nbsp;<label class="form-check-label" for="%s">%s</label>',
                 $id,
                 $hCategory
             );

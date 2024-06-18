@@ -3,48 +3,51 @@ use Daniel\Vote\Model\Category;
 $filter = new Category('filter', true, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : null);
 $category = new Category('category', true);
 ?>
-<html>
+<!doctype html>
+<html lang="en">
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/static/css/main.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     </head>
     <body>
-        <div id="header">
+        <div id="header" class="form-check">
         <?php
             if (array_key_exists('email', $_SESSION)) {
-                printf('<b>%s</b><br/>', htmlentities($_SESSION['email']));
-                printf('<a href="%s">Logout</a><br/><br/>', $url['logout']);
+                printf('<b>%s</b>', htmlentities($_SESSION['email']));
+                printf('&nbsp;<a href="%s">Logout</a><br/>', $url['logout']);
         ?>
-        <hr/>
         <!-- create question -->
         <form id="create-question" method="post" action="/q">
-            <label id="question">Question</label>
-            <input id="question" type="text" name="q" placeholder="Question?" required />
+            <label for="question">Question</label>
+            <input id="question" class="form-control" type="text" name="q" placeholder="Question?" required />
             <br/>
             <fieldset id="categories">
                 <legend>Categories</legend>
                 <?= $category->render(Category::PARAM); ?>
             </fieldset>
-            <input type="submit" value="Create question"/>
+            <input class="btn btn-danger" type="submit" value="Create question"/>
         </form>
         <?php
             } else {
         ?>
             <!-- login -->
-            <div class="login">
+            <div class="login btn btn-success">
                 <a href="<?php echo filter_var($url['auth'], FILTER_SANITIZE_URL); ?>" class="login-btn">Sign in with Google</a>
-        <?php
+            </div>
+            <?php
                 printf('&nbsp;or <a href="%s">login here</a>', $url['login']);
             }
         ?>
-            </div>
         </div>
         <!-- filter -->
         <form id="filter" method="GET">
             <fieldset id="filter">
-                <legend>Filter categories</legend>
+                <legend>Filter by categories</legend>
                 <?= $filter->render(Category::PARAM); ?>
-                <br/>
-                <input type="submit" value="Filter"/>
+                &nbsp;
+                <input class="btn btn-primary" type="submit" value="Filter"/>
             </fieldset>
         </form>
         <div id="body">
