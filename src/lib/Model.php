@@ -196,18 +196,21 @@ class Model
 ORDER BY seq DESC
    LIMIT $offset, $pageSize + 1
 EOS;
-        $qs = [];
+        $questions = [];
         $stmt = $this->pdo->query($sql);
         if (!$stmt) {
-            return $qs;
+            return $$questions;
         }
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $record) {
-            $qs[] = new Record($record);
+            $questions[] = new Record($record);
         }
-        return $qs;
+        return $questions;
     }
 
-    /* @phpstan-ignore missingType.iterableValue */
+    /**
+     * @param string $q
+     * @phpstan-ignore missingType.iterableValue
+     */
     public function getAnswers(string $q): array|false
     {
         $sqlAnswers = <<<EOS
