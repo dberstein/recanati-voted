@@ -51,7 +51,6 @@ $category = new Category('category', true);
             </fieldset>
         </form>
         <div id="body">
-            <ul>
         <!-- questions -->
         <?php
             $i = 0;
@@ -60,7 +59,7 @@ $category = new Category('category', true);
                 if ($i > $pageSize) {
                     break;
                 }
-                printf('<li><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></li>',
+                printf('<div class="alert alert-info"><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></div>',
                     htmlentities($q->get('id')),
                     htmlentities($q->get('text')),
                     htmlentities($q->get('created_by')),
@@ -68,7 +67,6 @@ $category = new Category('category', true);
                 );
             }
         ?>
-            </ul>
         </div>
 
         <!-- pagination -->
