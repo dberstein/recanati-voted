@@ -3,6 +3,10 @@ form#create-question {
     padding-bottom: 1%;
 }
 
+#create-question > label {
+    font-size: calc(1.275rem + .3vw);
+}
+
 div#body {
     /* background-color: rgb(162, 251, 10); */
     padding: 10px;
