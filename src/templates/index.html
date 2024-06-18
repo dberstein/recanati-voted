@@ -15,6 +15,7 @@ $category = new Category('category', true);
                 printf('<a href="%s">Logout</a><br/><br/>', $url['logout']);
         ?>
         <hr/>
+        <!-- create question -->
         <form id="create-question" method="post" action="/q">
             <label id="question">Question</label>
             <input id="question" type="text" name="q" placeholder="Question?" required />
@@ -28,6 +29,7 @@ $category = new Category('category', true);
         <?php
             } else {
         ?>
+            <!-- login -->
             <div class="login">
                 <a href="<?php echo filter_var($url['auth'], FILTER_SANITIZE_URL); ?>" class="login-btn">Sign in with Google</a>
         <?php
@@ -36,6 +38,7 @@ $category = new Category('category', true);
         ?>
             </div>
         </div>
+        <!-- filter -->
         <form id="filter" method="GET">
             <fieldset id="filter">
                 <legend>Filter categories</legend>
@@ -46,6 +49,7 @@ $category = new Category('category', true);
         </form>
         <div id="body">
             <ul>
+        <!-- questions -->
         <?php
             $i = 0;
             foreach ($questions as $q) {
@@ -63,6 +67,8 @@ $category = new Category('category', true);
         ?>
             </ul>
         </div>
+
+        <!-- pagination -->
         <?php
         if ($page > 1) {
         ?>

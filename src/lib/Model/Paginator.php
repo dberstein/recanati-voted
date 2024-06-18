@@ -7,18 +7,35 @@ namespace Daniel\Vote\Model;
 class Paginator
 {
     public const PARAM = 'page';
+
+    /**
+     * @var string $uri
+     */
     protected string $uri;
+
+    /**
+     * @var int $page
+     */
     protected int $page;
+
     /**
      * @var array<string> $qs
      */
     protected array $qs = [];
+
+    /**
+     * @param string $uri
+     * @param ?string $qs
+     */
     public function __construct(string $uri, string $qs = null)
     {
         $this->uri = $uri;
         parse_str((string) $qs, $this->qs);
     }
 
+    /**
+     * @param int $offset
+     */
     public function url(int $offset): string
     {
         $qs = $this->qs;

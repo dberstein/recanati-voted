@@ -10,6 +10,11 @@ class Vote
     protected string $question;
     protected string $answer;
 
+    /**
+     * @param PDO $pdo
+     * @param string $question
+     * @param string $answer
+     */
     public function __construct(PDO $pdo, string $question, string $answer)
     {
         $this->pdo = $pdo;
@@ -17,6 +22,9 @@ class Vote
         $this->answer = $answer;
     }
 
+    /**
+     * @return bool
+     */
     public function __invoke(): bool
     {
         // UPDATE or INSERT user's vote?

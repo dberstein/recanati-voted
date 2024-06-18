@@ -4,7 +4,7 @@ PHPSTAN_LEVEL := 7
 build:
 	@docker build -t phpapp .
 
-run/dev: test phpstan build
+run/dev: phpstan test build
 	@docker run --rm -p 8080:80 --env-file src/.env --name phpapp -v $(PWD)/src/html:/var/www/html -v $(PWD)/src/voted.db:/data/voted.db phpapp
 
 .PHONY: run
@@ -25,7 +25,7 @@ unsync:
 
 .PHONY: test
 test:
-	@vendor/bin/phpunit tests
+	@vendor/bin/phpunit --stop-on-defect tests
 
 .PHONY: composer
 composer:
@@ -33,7 +33,7 @@ composer:
 
 .PHONY: phpstan
 phpstan:
-	@vendor/bin/phpstan analyse -vvv -n --level $(PHPSTAN_LEVEL) src tests
+	@vendor/bin/phpstan analyse -vvv -n --no-progress --level $(PHPSTAN_LEVEL) src tests
 
 .PHONY: format/check
 format/check:

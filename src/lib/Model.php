@@ -25,6 +25,10 @@ class Model
      */
     protected Client $client;
 
+    /**
+     * @param PDO $pdo
+     * @param Client $client
+     */
     public function __construct(PDO $pdo, Client $client)
     {
         $this->pdo = $pdo;
