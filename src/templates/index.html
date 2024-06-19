@@ -60,11 +60,12 @@ $category = new Category('category', true);
                 }
                 ?>
                 <div class="card">
-                    <span>
-                        <a class="btn btn-primary" href="/q/<?= htmlentities($q->get('id')); ?>">
-                            <?= htmlentities($q->get('text')); ?>
-                        </a>&nbsp;by&nbsp;<strong><?= htmlentities($q->get('created_by')); ?></strong>&nbsp;(<?= $q->get('votes'); ?>&nbsp;votes)
-                    </span>
+                    <!-- <img class="card-img-top" src="..." alt="Card image cap"> -->
+                    <div class="card-body">
+                        <h5 class="card-title"><?= htmlentities($q->get('text')); ?></h5>
+                        <p class="card-text">by <strong><?= htmlentities($q->get('created_by')); ?></strong> (<?= $q->get('votes'); ?>&nbsp;votes)</p>
+                        <a class="btn btn-primary" href="/q/<?= htmlentities($q->get('id')); ?>">View</a>
+                    </div>
                 </div>
         <?php
             }
