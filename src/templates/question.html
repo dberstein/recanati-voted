@@ -8,10 +8,9 @@
     </head>
     <body>
         <div id="header" class="alert alert-danger">
-        <?php
-            echo '[<a href="/">home</a>]&nbsp;<b>' . htmlentities($question['text']) . '</b><br/>';
-        ?>
-        by <b><?=htmlentities($question['created_by'])?></b>
+            <a href="/" class="btn btn-success">Return home</a>
+            <b><?= htmlentities($question['text']); ?></b><br/>
+            by <b><?=htmlentities($question['created_by'])?></b>
         </div>
         <div id="body" class="">
             <form action="/vote" method="post">
