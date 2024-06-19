@@ -16,7 +16,7 @@ $category = new Category('category', true);
         <?php
             if (array_key_exists('email', $_SESSION)) {
                 printf('<b>%s</b>', htmlentities($_SESSION['email']));
-                printf('&nbsp;<a href="%s">Logout</a><br/>', $url['logout']);
+                printf('&nbsp;<a class="btn btn-warning" href="%s">Logout</a><br/>', $url['logout']);
         ?>
         <!-- create question -->
         <form id="create-question" method="post" action="/q">
