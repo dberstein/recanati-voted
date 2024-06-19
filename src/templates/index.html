@@ -58,12 +58,15 @@ $category = new Category('category', true);
                 if ($i > $pageSize) {
                     break;
                 }
-                printf('<div class="alert alert-info"><a href="/q/%s">%s</a><br/>by [<div style="font-weight: bold; display: inline;">%s</div>]&nbsp;<i>(%d votes)</i></div>',
-                    htmlentities($q->get('id')),
-                    htmlentities($q->get('text')),
-                    htmlentities($q->get('created_by')),
-                    $q->get('votes')
-                );
+                ?>
+                <div class="card">
+                    <span>
+                        <a class="btn btn-primary" href="/q/<?= htmlentities($q->get('id')); ?>">
+                            <?= htmlentities($q->get('text')); ?>
+                        </a>&nbsp;by&nbsp;<strong><?= htmlentities($q->get('created_by')); ?></strong>&nbsp;(<?= $q->get('votes'); ?>&nbsp;votes)
+                    </span>
+                </div>
+        <?php
             }
         ?>
         </div>
