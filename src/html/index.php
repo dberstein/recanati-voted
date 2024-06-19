@@ -44,7 +44,7 @@ $app->add(function ($request, $handler) {
 // Define app routes
 $app->get('/', function (Request $request, Response $response, $args) use ($model, $view) {
     $page = (int) (isset($_GET[Paginator::PARAM]) && is_numeric($_GET[Paginator::PARAM]) ? $_GET[Paginator::PARAM] : 1);
-    $pageSize = 10;
+    $pageSize = 5;
     $questions = $model->getQuestions($pageSize, $page, isset($_GET[Category::PARAM]) ? $_GET[Category::PARAM] : []);
     $hasNext = count((array) $questions) > $pageSize;
     $paginator = new Paginator($model->urlFor($request, 'index'), $_SERVER['QUERY_STRING']);
