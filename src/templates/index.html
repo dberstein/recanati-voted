@@ -21,7 +21,7 @@ $category = new Category('category', true);
         <!-- create question -->
         <form id="create-question" method="post" action="/q">
             <label for="question">Question</label>
-            <input id="question" class="form-control" type="text" name="q" placeholder="Question?" required />
+            <input id="question" class="form-control" type="text" name="q" placeholder="Your question?" required />
             <fieldset id="categories">
                 <legend>Categories</legend>
                 <?= $category->render(Category::PARAM); ?>
