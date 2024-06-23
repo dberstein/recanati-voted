@@ -24,7 +24,7 @@ $category = new Category('category', true);
         ?>
         <!-- logout -->
         <div class="alert alert-success">
-            Login user: <?= htmlentities($_SESSION['email']); ?>>
+            Login user: <strong><?= htmlentities($_SESSION['email']); ?></strong>
         </div>
         &nbsp;
         <a class="btn btn-warning" href="<?= $url['logout']; ?>>">
