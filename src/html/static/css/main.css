@@ -24,6 +24,28 @@ li > a {
 }
 
 a.login-btn {
-    color: black;
+    color: white;
     text-decoration: none;
+}
+
+div#header > alert {
+    float: right;
+}
+
+div.card {
+    margin-bottom: 5px;
+}
+
+div.alert.alert-warning {
+    margin-bottom: 0;
+}
+
+div.alert.alert-info {
+    margin-left: 15%;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+input.form-check-input {
+    cursor: grab;
 }
